@@ -12,6 +12,7 @@ const [name,setName] = useState("")
 const [phone,setPhone] = useState("")
 const [entry,setEntry] = useState("")
 const [photo,setPhoto] = useState(null)
+const [loading,setLoading] = useState(false)
 
 const searchParams = useSearchParams()
 const entryFromURL = searchParams.get("entry")
@@ -22,6 +23,30 @@ setEntry(entryFromURL)
 }
 },[entryFromURL])
 
+useEffect(()=>{
+if(!entry) return
+
+const loadMember = async () => {
+setLoading(true)
+
+const { data } = await supabase
+.from("members")
+.select("name, phone")
+.eq("entry_no", entry)
+.single()
+
+if(data){
+setName(data.name || "")
+setPhone(data.phone || "")
+}
+
+setLoading(false)
+}
+
+loadMember()
+
+},[entry])
+
 const generateCard = async ()=>{
 
 const canvas = document.createElement("canvas")
@@ -30,17 +55,33 @@ const ctx = canvas.getContext("2d")
 canvas.width = 1000
 canvas.height = 600
 
-ctx.fillStyle="#0B1F3A"
-ctx.fillRect(0,0,1000,600)
+// Logo
+const logo = new Image()
+logo.src = "/smak-logo.png"
+logo.onload = ()=>{
+ctx.drawImage(logo,40,30,80,80)
+}
 
-ctx.fillStyle="white"
-ctx.font="bold 40px Arial"
-ctx.fillText("SMAK MEMBER ID CARD",260,80)
+// Header
+ctx.fillStyle = "white"
+ctx.font = "bold 42px Arial"
+ctx.fillText("SMAK MEMBER ID CARD",200,80)
 
-ctx.font="28px Arial"
-ctx.fillText(`Name: ${name}`,350,250)
-ctx.fillText(`Entry: ${entry}`,350,300)
-ctx.fillText(`Phone: ${phone}`,350,350)
+// Photo frame
+ctx.strokeStyle = "white"
+ctx.lineWidth = 4
+ctx.strokeRect(70,200,220,240)
+
+// Member info
+ctx.font = "30px Arial"
+ctx.fillText(`Name: ${name}`,340,260)
+ctx.fillText(`Member ID: ${entry}`,340,320)
+ctx.fillText(`Phone: ${phone}`,340,380)
+
+// Footer
+ctx.font = "20px Arial"
+ctx.fillText("Society for Medical Academia & Knowledge",250,520)
+ctx.fillText("Verify: smakresearch.com",360,550)
 
 if(photo){
 
@@ -134,12 +175,23 @@ return(
 Generate SMAK ID Card
 </h1>
 
-<input placeholder="Name" onChange={(e)=>setName(e.target.value)} />
-<input placeholder="Phone" onChange={(e)=>setPhone(e.target.value)} />
+<input
+placeholder="Name"
+value={name}
+disabled
+className="border px-2 py-1"
+/>
+<input
+placeholder="Phone"
+value={phone}
+disabled
+className="border px-2 py-1"
+/>
 <input
 placeholder="Entry No"
 value={entry}
 onChange={(e)=>setEntry(e.target.value)}
+className="border px-2 py-1"
 />
 <input type="file" onChange={(e)=>setPhoto(e.target.files[0])}/>
 
