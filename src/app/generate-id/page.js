@@ -55,6 +55,10 @@ const ctx = canvas.getContext("2d")
 canvas.width = 1000
 canvas.height = 600
 
+// Background
+ctx.fillStyle = "#0B1F3A"
+ctx.fillRect(0,0,canvas.width,canvas.height)
+
 // Logo
 const logo = new Image()
 logo.src = "/smak-logo.png"
@@ -63,7 +67,7 @@ ctx.drawImage(logo,40,30,80,80)
 }
 
 // Header
-ctx.fillStyle = "white"
+ctx.fillStyle = "#FFFFFF"
 ctx.font = "bold 42px Arial"
 ctx.fillText("SMAK MEMBER ID CARD",200,80)
 
@@ -137,8 +141,14 @@ const downloadPDF = (canvas)=>{
 
 const imgData = canvas.toDataURL("image/png")
 
-const pdf = new jsPDF("landscape","px",[1000,600])
+const pdf = new jsPDF({
+orientation: "landscape",
+unit: "px",
+format: [1000,600]
+})
 
+pdf.setFillColor(11,31,58)
+pdf.rect(0,0,1000,600,"F")
 pdf.addImage(imgData,"PNG",0,0,1000,600)
 
 pdf.save("smak-id-card.pdf")
