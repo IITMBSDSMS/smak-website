@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { createClient } from "@supabase/supabase-js"
 
@@ -9,7 +9,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
-export default function MemberPage(){
+function MemberPageComponent(){
 
   const searchParams = useSearchParams()
   const entryId = searchParams.get("entry")
@@ -73,4 +73,16 @@ export default function MemberPage(){
 
   )
 
+}
+
+export default function MemberPage(){
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-xl">Loading member verification...</p>
+      </div>
+    }>
+      <MemberPageComponent />
+    </Suspense>
+  )
 }
