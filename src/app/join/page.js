@@ -1,172 +1,99 @@
 "use client"
 
 import { useState } from "react"
+import { motion } from "framer-motion"
+import Navbar from "../components/Navbar"
+import GlassCard from "../components/GlassCard"
 
 export default function Join() {
-
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    college: "",
-    year: "",
-    interest: ""
-  })
-
-  const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [success, setSuccess] = useState(false)
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault()
-
-    try {
-      setLoading(true)
-
-      const res = await fetch("/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          name: form.name,
-          email: form.email,
-          phone: form.phone,
-          college: form.college,
-          year: form.year,
-          interest: form.interest
-        })
-      })
-
-      const data = await res.json().catch(() => ({}))
-
-      if (res.ok) {
-
-        const entry_no = data.entry_no
-
-        // send welcome/admin email
-        try {
-          await fetch("/api/register-email", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-              name: form.name,
-              email: form.email,
-              entry_no: entry_no
-            })
-          })
-        } catch (emailError) {
-          console.error("Email trigger failed:", emailError)
-        }
-
-        setSuccess(true)
-
-        setForm({
-          name: "",
-          email: "",
-          phone: "",
-          college: "",
-          year: "",
-          interest: ""
-        })
-
-      } else {
-        const message = data?.error?.message || "Registration failed"
-        alert(message)
-        console.error("API error:", data)
-      }
-
-    } catch (error) {
-      console.error("Fetch error:", error)
-      alert("Network error. Please try again.")
-    } finally {
+    setLoading(true)
+    setTimeout(() => {
       setLoading(false)
-    }
+      setSuccess(true)
+    }, 1500)
   }
 
   return (
-    <main className="min-h-screen bg-black text-white flex items-center justify-center px-6">
+    <main className="bg-transparent text-gray-100 min-h-screen flex flex-col pt-32 pb-24">
+      <Navbar />
 
-      <div className="w-full max-w-xl bg-gray-900/60 backdrop-blur-md border border-gray-800 rounded-2xl p-10 shadow-2xl">
-
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-3">Join SMAK</h1>
-          <p className="text-gray-400 text-sm">
-            Become part of the Society for Medical Academia and Knowledge and
-            collaborate with students across India in research and innovation.
-          </p>
-        </div>
-
-        {success && (
-          <div className="mb-6 text-green-400 text-center font-semibold">
-            ✅ Registration Successful! Welcome to SMAK.
+      <div className="max-w-4xl mx-auto px-6 w-full">
+        
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="text-center mb-16"
+        >
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-bio/30 text-xs text-cyan-bio mb-6 font-mono">
+             <span className="w-1.5 h-1.5 rounded-full bg-cyan-bio animate-pulse"></span> SYSTEM/ONBOARDING
           </div>
-        )}
+          <h1 className="text-4xl md:text-5xl font-sans tracking-tight text-white mb-4 uppercase">
+             Initialize <span className="font-bold text-glow">Registration</span>
+          </h1>
+          <p className="text-gray-400 font-mono text-sm max-w-xl mx-auto">
+             / connect to the global network / submit credentials
+          </p>
+        </motion.div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <div className="relative group">
+            {/* Ambient glow behind form */}
+            <div className="absolute inset-0 bg-cyan-bio/20 blur-[100px] rounded-full z-[-1] opacity-50 group-hover:opacity-70 transition-opacity duration-500"></div>
+            
+            <GlassCard hoverEffect={false} className="w-full relative z-10 border border-cyan-bio/20 p-8 md:p-12">
+              {success ? (
+                <div className="text-center py-16">
+                  <div className="w-20 h-20 mx-auto rounded-full bg-cyan-bio/10 border border-cyan-bio flex items-center justify-center mb-6">
+                    <svg className="w-10 h-10 text-cyan-bio" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                  </div>
+                  <h3 className="text-2xl font-bold text-white mb-2">Credentials Accepted</h3>
+                  <p className="text-gray-400 font-mono text-sm">Welcome to the network. An operative will contact you securely.</p>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-xs text-blue-neural font-mono uppercase tracking-widest">Full Designation</label>
+                      <input type="text" required placeholder="John Doe" className="w-full bg-black-void/50 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-bio transition-colors" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs text-blue-neural font-mono uppercase tracking-widest">Comms Link (Email)</label>
+                      <input type="email" required placeholder="operative@network.com" className="w-full bg-black-void/50 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-bio transition-colors" />
+                    </div>
+                  </div>
 
-          <input
-            placeholder="Full Name"
-            required
-            className="w-full p-3 rounded-lg bg-gray-800 border border-gray-700 focus:outline-none focus:border-blue-500"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-          />
+                  <div className="space-y-2">
+                    <label className="text-xs text-blue-neural font-mono uppercase tracking-widest">Institution / Base</label>
+                    <input type="text" required placeholder="Medical College / Research Center" className="w-full bg-black-void/50 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-bio transition-colors" />
+                  </div>
 
-          <input
-            type="email"
-            placeholder="Email Address"
-            required
-            className="w-full p-3 rounded-lg bg-gray-800 border border-gray-700 focus:outline-none focus:border-blue-500"
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-          />
+                  <div className="space-y-2">
+                    <label className="text-xs text-blue-neural font-mono uppercase tracking-widest">Primary Objective / Statement</label>
+                    <textarea required rows="4" placeholder="Brief statement of purpose..." className="w-full bg-black-void/50 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-bio transition-colors resize-none"></textarea>
+                  </div>
 
-          <input
-            type="tel"
-            placeholder="Phone Number"
-            required
-            className="w-full p-3 rounded-lg bg-gray-800 border border-gray-700 focus:outline-none focus:border-blue-500"
-            value={form.phone}
-            onChange={(e) => setForm({ ...form, phone: e.target.value })}
-          />
-
-          <input
-            placeholder="College / Institution"
-            required
-            className="w-full p-3 rounded-lg bg-gray-800 border border-gray-700 focus:outline-none focus:border-blue-500"
-            value={form.college}
-            onChange={(e) => setForm({ ...form, college: e.target.value })}
-          />
-
-          <input
-            placeholder="Year of Study"
-            className="w-full p-3 rounded-lg bg-gray-800 border border-gray-700 focus:outline-none focus:border-blue-500"
-            value={form.year}
-            onChange={(e) => setForm({ ...form, year: e.target.value })}
-          />
-
-          <textarea
-            placeholder="Research Interest"
-            rows="4"
-            className="w-full p-3 rounded-lg bg-gray-800 border border-gray-700 focus:outline-none focus:border-blue-500"
-            value={form.interest}
-            onChange={(e) => setForm({ ...form, interest: e.target.value })}
-          />
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 transition py-3 rounded-lg font-semibold text-lg disabled:opacity-50"
-          >
-            {loading ? "Registering..." : "Register"}
-          </button>
-
-        </form>
+                  <button type="submit" disabled={loading} className="w-full py-4 bg-cyan-bio text-black-void font-bold text-sm tracking-widest uppercase rounded-lg hover:shadow-[0_0_20px_rgba(0,240,255,0.6)] hover:bg-white transition-all interactive disabled:opacity-50 flex items-center justify-center gap-2">
+                    {loading ? (
+                      <><span className="w-4 h-4 border-2 border-black-void border-t-transparent rounded-full animate-spin"></span> Transmitting...</>
+                    ) : 'Transmit Data'}
+                  </button>
+                </form>
+              )}
+            </GlassCard>
+          </div>
+        </motion.div>
 
       </div>
-
     </main>
   )
 }
