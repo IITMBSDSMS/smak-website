@@ -308,7 +308,7 @@ export default function ResearchClub() {
 
       {/* Footer minimal */}
       <footer className="py-8 border-t border-gray-900 text-center relative z-20 bg-black-obsidian text-xs font-mono text-gray-500">
-         <p>SMAK.RESEARCH // {new Date().getFullYear()} // SYSTEM ONLINE</p>
+         <p>SMAK.RESEARCH {"//"} {new Date().getFullYear()} {"//"} SYSTEM ONLINE</p>
       </footer>
     </main>
   )
