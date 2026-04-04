@@ -32,7 +32,7 @@ export async function POST(req) {
     })
 
     // EMAIL TO USER
-    const generateIdLink = `https://smakresearch.com/generate-id?entry=${encodeURIComponent(entry_no)}`
+    const generateIdLink = `https://smakresearch.com/generate-id?entry=${encodeURIComponent(entry_no)}&name=${encodeURIComponent(name)}`
 
     await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL || "SMAK <official@smakresearch.com>",
