@@ -290,7 +290,7 @@ function GenerateIDComponent() {
                   <div className="flex justify-center w-full">
                     <div className="grid grid-cols-[80px_1fr] gap-x-2 gap-y-2 text-sm max-w-[280px]">
                       <div className="text-[#64748B] font-semibold text-right text-[11px] uppercase tracking-wider pt-0.5">Inst.</div>
-                      <div className="text-[#1E293B] font-medium leading-tight truncate">{college || "Affiliate Organization"}</div>
+                      <div className="text-[#1E293B] font-bold text-[12px] leading-tight flex items-center">{college || "Affiliate Organization"}</div>
                       
                       <div className="text-[#64748B] font-semibold text-right text-[11px] uppercase tracking-wider pt-0.5">ID No.</div>
                       <div className="text-[#1E293B] font-bold font-mono tracking-wider">{entry || "SMAK-0000"}</div>
