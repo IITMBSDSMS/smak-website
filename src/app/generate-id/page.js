@@ -248,7 +248,7 @@ function GenerateIDComponent() {
               <div className="relative w-full h-[100px] bg-[#0A1930] flex items-center px-6">
                 <div className="flex items-center gap-4 relative z-10 w-full">
                    <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center p-1.5 shadow-md shrink-0">
-                     <img src="/logo.png" className="w-full h-full object-contain" alt="SMAK" crossOrigin="anonymous" />
+                     <img src="/logo.png" className="w-full h-full object-contain" alt="SMAK" />
                    </div>
                    <div className="flex-1">
                      <div className="text-[10px] tracking-widest text-[#60A5FA] font-medium uppercase leading-tight mb-0.5">Society for Medical</div>
