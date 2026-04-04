@@ -123,7 +123,7 @@ function GenerateIDComponent() {
 
     } catch (err) {
       console.error(err)
-      alert("Error generating ID card. Ensure your photo is a valid file type.")
+      alert("Error generating ID card: " + err.message)
     } finally {
       setGenerating(false)
     }
@@ -268,7 +268,7 @@ function GenerateIDComponent() {
                 <div className="w-[150px] height-[190px] border border-[#CBD5E1] p-1.5 bg-white shadow-sm mb-6 rounded">
                   <div className="w-[136px] h-[176px] bg-[#F1F5F9] relative overflow-hidden flex flex-col items-center justify-center">
                     {photoPreview ? (
-                      <img src={photoPreview} className="w-full h-full object-cover" alt="Member" crossOrigin="anonymous" />
+                      <img src={photoPreview} className="w-full h-full object-cover" alt="Member" />
                     ) : (
                       <div className="flex flex-col items-center justify-center opacity-40 text-[#0F172A] w-full h-full">
                         <div className="text-4xl mb-2">👤</div>
