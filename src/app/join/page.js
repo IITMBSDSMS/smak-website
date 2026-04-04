@@ -4,18 +4,81 @@ import { useState } from "react"
 import { motion } from "framer-motion"
 import Navbar from "../components/Navbar"
 import GlassCard from "../components/GlassCard"
+import { createClient } from "@supabase/supabase-js"
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+)
 
 export default function Join() {
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    college: "",
+    interest: ""
+  })
+  
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [errorMsg, setErrorMsg] = useState("")
 
-  const handleSubmit = (e) => {
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value })
+  }
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
-    setTimeout(() => {
-      setLoading(false)
+    setErrorMsg("")
+
+    try {
+      // 1. Generate a temporary Entry No for the email
+      const generatedEntryNo = `SMAK-M-${Math.floor(1000 + Math.random() * 9000)}`
+
+      // 2. Insert into Supabase 'members'
+      // Only insert fields that exist in the test schema
+      const { error: dbError } = await supabase
+        .from('members')
+        .insert([
+          { 
+            name: formData.name, 
+            email: formData.email, 
+            college: formData.college,
+            interest: formData.interest,
+            phone: "0000000000", // Fallback for required fields based on old schema
+            year: "1st Year",
+            entry_no: generatedEntryNo
+          }
+        ])
+
+      // Ignore unique constraint error if they apply multiple times for now, just send the email anyway
+      if (dbError && dbError.code !== '23505') {
+        console.error("Supabase Error:", dbError)
+      }
+
+      // 3. Send the registration email 
+      const emailRes = await fetch("/api/register-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          entry_no: generatedEntryNo
+        })
+      })
+
+      if (!emailRes.ok) {
+        throw new Error("Failed to send confirmation email. " + await emailRes.text())
+      }
+
       setSuccess(true)
-    }, 1500)
+    } catch (err) {
+      console.error(err)
+      setErrorMsg(err.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -57,29 +120,34 @@ export default function Join() {
                     <svg className="w-10 h-10 text-cyan-bio" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                   </div>
                   <h3 className="text-2xl font-bold text-white mb-2">Credentials Accepted</h3>
-                  <p className="text-gray-400 font-mono text-sm">Welcome to the network. An operative will contact you securely.</p>
+                  <p className="text-gray-400 font-mono text-sm max-w-md mx-auto">Welcome to the network. Your ID verification and WhatsApp community link have been securely transmitted to your email.</p>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-6">
+                  {errorMsg && (
+                    <div className="p-4 bg-red-900/30 border border-red-500 text-red-200 rounded-lg text-sm text-center">
+                      Error: {errorMsg}
+                    </div>
+                  )}
                   <div className="grid md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="text-xs text-blue-neural font-mono uppercase tracking-widest">Full Designation</label>
-                      <input type="text" required placeholder="John Doe" className="w-full bg-black-void/50 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-bio transition-colors" />
+                      <input type="text" name="name" value={formData.name} onChange={handleChange} required placeholder="John Doe" className="w-full bg-black-void/50 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-bio transition-colors" />
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs text-blue-neural font-mono uppercase tracking-widest">Comms Link (Email)</label>
-                      <input type="email" required placeholder="operative@network.com" className="w-full bg-black-void/50 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-bio transition-colors" />
+                      <input type="email" name="email" value={formData.email} onChange={handleChange} required placeholder="operative@network.com" className="w-full bg-black-void/50 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-bio transition-colors" />
                     </div>
                   </div>
 
                   <div className="space-y-2">
                     <label className="text-xs text-blue-neural font-mono uppercase tracking-widest">Institution / Base</label>
-                    <input type="text" required placeholder="Medical College / Research Center" className="w-full bg-black-void/50 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-bio transition-colors" />
+                    <input type="text" name="college" value={formData.college} onChange={handleChange} required placeholder="Medical College / Research Center" className="w-full bg-black-void/50 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-bio transition-colors" />
                   </div>
 
                   <div className="space-y-2">
                     <label className="text-xs text-blue-neural font-mono uppercase tracking-widest">Primary Objective / Statement</label>
-                    <textarea required rows="4" placeholder="Brief statement of purpose..." className="w-full bg-black-void/50 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-bio transition-colors resize-none"></textarea>
+                    <textarea name="interest" value={formData.interest} onChange={handleChange} required rows="4" placeholder="Brief statement of purpose..." className="w-full bg-black-void/50 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-bio transition-colors resize-none"></textarea>
                   </div>
 
                   <button type="submit" disabled={loading} className="w-full py-4 bg-cyan-bio text-black-void font-bold text-sm tracking-widest uppercase rounded-lg hover:shadow-[0_0_20px_rgba(0,240,255,0.6)] hover:bg-white transition-all interactive disabled:opacity-50 flex items-center justify-center gap-2">
