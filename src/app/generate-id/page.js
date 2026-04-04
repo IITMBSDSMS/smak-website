@@ -61,17 +61,15 @@ function GenerateIDComponent() {
         .single()
 
       if (data) {
-        if(data.name) setName(data.name)
-        if(data.phone) setPhone(data.phone)
+        if(!nameParam && data.name) setName(data.name)
+        if(!phoneParam && data.phone) setPhone(data.phone)
         if(data.college) setCollege(data.college)
       }
       setLoading(false)
     }
 
-    if (!nameParam) {
-      loadMember()
-    }
-  }, [entry, nameParam])
+    loadMember()
+  }, [entry, nameParam, phoneParam])
 
   const handlePhotoUpload = (e) => {
     if (e.target.files && e.target.files[0]) {
