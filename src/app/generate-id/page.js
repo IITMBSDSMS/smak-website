@@ -284,7 +284,7 @@ function GenerateIDComponent() {
                     <div className="text-2xl font-black text-[#0F172A] tracking-tight leading-none uppercase">{name || "JOHN DOE"}</div>
                   </div>
                   
-                  <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-[#CBD5E1] to-transparent my-1"></div>
+                  <div className="w-full h-[1px] bg-[#CBD5E1] my-1"></div>
 
                   <div className="flex justify-center w-full">
                     <div className="grid grid-cols-[80px_1fr] gap-x-2 gap-y-2 text-sm max-w-[280px]">
@@ -304,10 +304,10 @@ function GenerateIDComponent() {
 
               {/* CARD FOOTER */}
               <div className="h-[80px] bg-[#0F172A] flex justify-between items-center px-5 border-x border-b border-[#0F172A] rounded-b-[16px] relative overflow-hidden">
-                <div className="absolute inset-0 bg-blue-600/10"></div>
+                <div className="absolute inset-0" style={{ backgroundColor: 'rgba(37,99,235,0.1)' }}></div>
                 <div className="flex-1 relative z-10">
-                   <div className="text-[9px] font-bold tracking-widest text-white/50 uppercase mb-1">Status: Active</div>
-                   <div className="text-[10px] text-white/80 leading-tight">This identification card is the property of SMAK Research. Valid for official duties only.</div>
+                   <div className="text-[9px] font-bold tracking-widest text-[#94A3B8] uppercase mb-1">Status: Active</div>
+                   <div className="text-[10px] text-[#CBD5E1] leading-tight">This identification card is the property of SMAK Research. Valid for official duties only.</div>
                 </div>
                 <div className="w-[56px] h-[56px] bg-white shrink-0 rounded-[4px] flex items-center justify-center p-1 shadow-sm relative z-10 ml-4">
                   {qrUrl ? (
