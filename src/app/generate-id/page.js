@@ -234,25 +234,26 @@ function GenerateIDComponent() {
             <div 
               id="id-card-element"
               ref={idCardRef}
-              className="relative shadow-[0_10px_40px_rgba(0,0,0,0.5)] flex flex-col font-sans"
+              className="relative flex flex-col font-sans"
               style={{
                 width: "378px",  // Roughly proportional to CR80
                 height: "600px", // Roughly proportional to CR80
                 backgroundColor: "#FFFFFF",
                 borderRadius: "16px",
-                overflow: "hidden"
+                overflow: "hidden",
+                boxShadow: "0 10px 40px rgba(0,0,0,0.5)"
               }}
             >
               
               {/* CARD HEADER (NAVY BLUE) */}
               <div className="relative w-full h-[100px] bg-[#0A1930] flex items-center px-6">
                 <div className="flex items-center gap-4 relative z-10 w-full">
-                   <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center p-1.5 shadow-md shrink-0">
+                   <div className="w-14 h-14 bg-[#FFFFFF] rounded-full flex items-center justify-center p-1.5 shrink-0" style={{ boxShadow: "0 4px 6px rgba(0,0,0,0.1)" }}>
                      <img src="/logo.png" className="w-full h-full object-contain" alt="SMAK" />
                    </div>
                    <div className="flex-1">
                      <div className="text-[10px] tracking-widest text-[#60A5FA] font-medium uppercase leading-tight mb-0.5">Society for Medical</div>
-                     <div className="text-lg font-bold text-white uppercase leading-tight">Academia & Knowledge</div>
+                     <div className="text-lg font-bold text-[#FFFFFF] uppercase leading-tight">Academia & Knowledge</div>
                    </div>
                 </div>
               </div>
@@ -265,12 +266,12 @@ function GenerateIDComponent() {
                 </h2>
                 
                 {/* Photo Frame */}
-                <div className="w-[150px] height-[190px] border border-[#CBD5E1] p-1.5 bg-white shadow-sm mb-6 rounded">
+                <div className="w-[150px] h-[190px] border border-[#CBD5E1] p-1.5 bg-[#FFFFFF] mb-6 rounded" style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
                   <div className="w-[136px] h-[176px] bg-[#F1F5F9] relative overflow-hidden flex flex-col items-center justify-center">
                     {photoPreview ? (
                       <img src={photoPreview} className="w-full h-full object-cover" alt="Member" />
                     ) : (
-                      <div className="flex flex-col items-center justify-center opacity-40 text-[#0F172A] w-full h-full">
+                      <div className="flex flex-col items-center justify-center w-full h-full" style={{ opacity: 0.4, color: "#0F172A" }}>
                         <div className="text-4xl mb-2">👤</div>
                         <span className="text-[10px] font-semibold tracking-wider text-center px-2 leading-tight">PHOTO<br/>REQUIRED</span>
                       </div>
@@ -309,12 +310,12 @@ function GenerateIDComponent() {
                    <div className="text-[9px] font-bold tracking-widest text-[#94A3B8] uppercase mb-1">Status: Active</div>
                    <div className="text-[10px] text-[#CBD5E1] leading-tight">This identification card is the property of SMAK Research. Valid for official duties only.</div>
                 </div>
-                <div className="w-[56px] h-[56px] bg-white shrink-0 rounded-[4px] flex items-center justify-center p-1 shadow-sm relative z-10 ml-4">
+                <div className="w-[56px] h-[56px] bg-[#FFFFFF] shrink-0 rounded-[4px] flex items-center justify-center p-1 relative z-10 ml-4" style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
                   {qrUrl ? (
                     <img src={qrUrl} alt="Verify QR" className="w-full h-full" />
                   ) : (
-                     <div className="w-full h-full bg-gray-100 p-1 flex items-center justify-center">
-                       <span className="text-[6px] text-gray-400 text-center font-bold">QR CODE</span>
+                     <div className="w-full h-full bg-[#F3F4F6] p-1 flex items-center justify-center">
+                       <span className="text-[6px] text-[#9CA3AF] text-center font-bold">QR CODE</span>
                      </div>
                   )}
                 </div>
