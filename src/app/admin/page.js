@@ -427,7 +427,9 @@ export default function Admin() {
       .delete()
       .eq("id", id)
 
-    if (!error) {
+    if (error) {
+      alert("Error deleting member: " + error.message)
+    } else {
       setMembers(members.filter(m => m.id !== id))
     }
   }
