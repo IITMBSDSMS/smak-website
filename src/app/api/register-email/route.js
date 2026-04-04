@@ -18,8 +18,8 @@ export async function POST(req) {
 
     // EMAIL TO ADMIN
     await resend.emails.send({
-      from: "SMAK <official@smakresearch.com>",
-      to: "official@smakresearch.com",
+      from: process.env.RESEND_FROM_EMAIL || "SMAK <official@smakresearch.com>",
+      to: process.env.ADMIN_EMAIL || "official@smakresearch.com",
       subject: "New SMAK Member Registration",
       html: `
 <div style="font-family:Arial">
@@ -35,7 +35,7 @@ export async function POST(req) {
     const generateIdLink = `https://smakresearch.com/generate-id?entry=${encodeURIComponent(entry_no)}`
 
     await resend.emails.send({
-      from: "SMAK <official@smakresearch.com>",
+      from: process.env.RESEND_FROM_EMAIL || "SMAK <official@smakresearch.com>",
       to: email,
       subject: "Welcome to SMAK Research Community",
       html: `

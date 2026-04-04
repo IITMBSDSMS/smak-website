@@ -158,8 +158,17 @@ export default function Home() {
           </Link>
 
           <Link
-            href="/research-club"
+            href="/campus-ambassador"
             className="group relative px-8 py-3 bg-transparent rounded-full overflow-hidden interactive"
+          >
+            <div className="absolute inset-0 border border-cyan-bio/50 rounded-full group-hover:border-white transition-colors duration-300"></div>
+            <div className="absolute inset-0 bg-cyan-bio/5 rounded-full group-hover:bg-cyan-bio/10 transition-colors"></div>
+            <span className="relative z-10 text-cyan-bio font-medium tracking-widest text-sm uppercase group-hover:text-white transition-colors duration-300">Apply for Campus Ambassador</span>
+          </Link>
+
+          <Link
+            href="/research-club"
+            className="group relative px-8 py-3 bg-transparent rounded-full overflow-hidden interactive hidden sm:flex items-center justify-center"
           >
             <div className="absolute inset-0 border border-gray-600 rounded-full group-hover:border-cyan-bio transition-colors duration-300"></div>
             <span className="relative z-10 text-gray-300 font-medium tracking-widest text-sm uppercase group-hover:text-white transition-colors duration-300">Explore Data</span>

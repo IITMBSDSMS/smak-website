@@ -1,0 +1,9 @@
+# Query: vanguard
+# ContextLines: 1
+
+1 result - 1 file
+
+src/app/research-club/page.js:
+  293          <h2 className="text-4xl md:text-5xl font-light mb-6 text-white uppercase tracking-tight">
+  294:           Join the <strong className="font-bold text-glow">Team</strong>
+  295          </h2>

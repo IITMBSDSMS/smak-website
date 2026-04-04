@@ -46,6 +46,7 @@ export default function Navbar() {
             <NavLink href="/research-club">RESEARCH CLUB</NavLink>
             <NavLink href="/events">EVENTS</NavLink>
             <NavLink href="/collaborators">PARTNERS</NavLink>
+            <NavLink href="/campus-ambassador">AMBASSADOR</NavLink>
             <NavLink href="/contact">CONTACT</NavLink>
           </nav>
           
@@ -92,6 +93,7 @@ export default function Navbar() {
               <MobileNavLink href="/research-club" onClick={closeMenu}>RESEARCH CLUB</MobileNavLink>
               <MobileNavLink href="/events" onClick={closeMenu}>EVENTS</MobileNavLink>
               <MobileNavLink href="/collaborators" onClick={closeMenu}>PARTNERS</MobileNavLink>
+              <MobileNavLink href="/campus-ambassador" onClick={closeMenu}>AMBASSADOR</MobileNavLink>
               <MobileNavLink href="/contact" onClick={closeMenu}>CONTACT</MobileNavLink>
             </nav>
             <Link 
