@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { getConfirmationEmail } from '@/lib/emailTemplates';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY || "fallback_for_vercel_build");
 
 export async function POST(request) {
   try {

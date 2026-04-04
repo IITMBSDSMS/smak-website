@@ -12,7 +12,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY 
   // Should ideally use service_role to bypass RLS in the backend server, but anon works if RLS allows public update
 );
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY || "fallback_for_vercel");
 
 export async function POST(request) {
   try {
