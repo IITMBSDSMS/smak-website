@@ -246,10 +246,9 @@ function GenerateIDComponent() {
               
               {/* CARD HEADER (NAVY BLUE) */}
               <div className="relative w-full h-[100px] bg-[#0A1930] flex items-center px-6">
-                <div className="absolute inset-0 opacity-[0.03] bg-[url('/noise.png')] mix-blend-overlay"></div>
                 <div className="flex items-center gap-4 relative z-10 w-full">
                    <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center p-1.5 shadow-md shrink-0">
-                     <img src="/logo.png" className="w-full h-full object-contain" alt="SMAK" />
+                     <img src="/logo.png" className="w-full h-full object-contain" alt="SMAK" crossOrigin="anonymous" />
                    </div>
                    <div className="flex-1">
                      <div className="text-[10px] tracking-widest text-[#60A5FA] font-medium uppercase leading-tight mb-0.5">Society for Medical</div>
@@ -267,13 +266,13 @@ function GenerateIDComponent() {
                 
                 {/* Photo Frame */}
                 <div className="w-[150px] height-[190px] border border-[#CBD5E1] p-1.5 bg-white shadow-sm mb-6 rounded">
-                  <div className="w-[136px] h-[176px] bg-[#F1F5F9] relative overflow-hidden">
+                  <div className="w-[136px] h-[176px] bg-[#F1F5F9] relative overflow-hidden flex flex-col items-center justify-center">
                     {photoPreview ? (
-                      <img src={photoPreview} className="w-full h-full object-cover" alt="Member" />
+                      <img src={photoPreview} className="w-full h-full object-cover" alt="Member" crossOrigin="anonymous" />
                     ) : (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center opacity-30 text-[#0F172A]">
-                        <svg className="w-12 h-12 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-                        <span className="text-[10px] font-semibold tracking-wider text-center px-2">PHOTO<br/>REQUIRED</span>
+                      <div className="flex flex-col items-center justify-center opacity-40 text-[#0F172A] w-full h-full">
+                        <div className="text-4xl mb-2">👤</div>
+                        <span className="text-[10px] font-semibold tracking-wider text-center px-2 leading-tight">PHOTO<br/>REQUIRED</span>
                       </div>
                     )}
                   </div>
