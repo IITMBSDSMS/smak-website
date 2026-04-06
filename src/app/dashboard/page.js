@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@supabase/supabase-js";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import QRCode from "qrcode";
 import Navbar from "../components/Navbar";
 
 const supabase = createClient(
@@ -20,6 +21,7 @@ export default function Dashboard() {
   const [userData, setUserData] = useState(null);
   
   const [isGenerating, setIsGenerating] = useState(false);
+  const [qrCodeURI, setQrCodeURI] = useState("");
   const certRef = useRef(null);
 
   useEffect(() => {
@@ -30,6 +32,19 @@ export default function Dashboard() {
       handleLogin(entryParam);
     }
   }, []);
+
+  // Generate QR Code once user is loaded
+  useEffect(() => {
+    if (userData?.entry_no) {
+      QRCode.toDataURL(`https://smakresearch.com/verify?id=${userData.entry_no}`, {
+        width: 150,
+        margin: 1,
+        color: { dark: '#0A1930', light: '#FFFFFF' }
+      })
+      .then(url => setQrCodeURI(url))
+      .catch(err => console.error("QR Generation Error:", err));
+    }
+  }, [userData]);
 
   const handleLogin = async (overrideEntry) => {
     const idToFetch = overrideEntry || entryNo;
@@ -67,16 +82,14 @@ export default function Dashboard() {
     setIsGenerating(true);
 
     try {
-      // 1. Log the backend interaction to mark as generated
       await fetch("/api/generate/certificate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ entry_no: userData.entry_no })
       });
 
-      // 2. Generate HD PDF natively on the client
       const canvas = await html2canvas(certRef.current, {
-        scale: 3, // High quality printing
+        scale: 3, 
         backgroundColor: "#FFFFFF",
         logging: false
       });
@@ -85,7 +98,7 @@ export default function Dashboard() {
       const pdf = new jsPDF({
         orientation: "landscape",
         unit: "mm",
-        format: "a4" // 297mm x 210mm
+        format: "a4" 
       });
       
       pdf.addImage(imgData, "PNG", 0, 0, 297, 210);
@@ -169,59 +182,76 @@ export default function Dashboard() {
              <div style={{ width: "100%", height: "100%", border: "2px solid #CBD5E1", display: "flex", flexDirection: "column", alignItems: "center", position: "relative", paddingTop: "50px", paddingBottom: "0px", boxSizing: "border-box" }}>
                
                {/* Registration ID Top Right */}
-               <div style={{ position: "absolute", top: "25px", right: "35px", color: "#64748B", fontSize: "12px", fontFamily: "monospace", letterSpacing: "2px" }}>
+               <div style={{ position: "absolute", top: "25px", right: "35px", color: "#64748B", fontSize: "14px", fontFamily: "monospace", letterSpacing: "2px", fontWeight: "bold" }}>
                  ID: {userData.entry_no}
                </div>
 
-               {/* Header & Logo */}
-               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "30px" }}>
-                 <div style={{ width: "100px", height: "100px", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "15px" }}>
+               {/* Dual Logo Header Block */}
+               <div style={{ width: "100%", padding: "0 60px", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", boxSizing: "border-box" }}>
+                 {/* Main SMAK Logo */}
+                 <div style={{ width: "110px", height: "110px", display: "flex", alignItems: "center", justifyContent: "center" }}>
                    <img src="/logo.png" style={{ width: "100%", height: "100%", objectFit: "contain" }} alt="SMAK Logo" />
                  </div>
-                 <h3 style={{ color: "#0A1930", fontSize: "18px", letterSpacing: "0.3em", fontWeight: "600", textTransform: "uppercase", margin: 0 }}>Society for Medical Academia & Knowledge</h3>
+                 
+                 {/* Center Brand Text */}
+                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
+                    <h3 style={{ color: "#0A1930", fontSize: "20px", letterSpacing: "0.3em", fontWeight: "600", textTransform: "uppercase", margin: 0 }}>Society for Medical</h3>
+                    <h3 style={{ color: "#0A1930", fontSize: "20px", letterSpacing: "0.3em", fontWeight: "600", textTransform: "uppercase", margin: 0 }}>Academia & Knowledge</h3>
+                 </div>
+
+                 {/* New Secondary Club Logo */}
+                 <div style={{ width: "110px", height: "110px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                   {/* Pointing to club_logo.png. User needs to drag their image into public/ */}
+                   <img src="/club_logo.png" style={{ width: "100%", height: "100%", objectFit: "contain" }} alt="SMAK Club Logo" />
+                 </div>
                </div>
 
                {/* Title */}
-               <h1 style={{ color: "#1E3A8A", fontSize: "60px", fontWeight: "900", textTransform: "uppercase", letterSpacing: "4px", margin: "0 0 25px 0", textAlign: "center", lineHeight: "1.15" }}>
+               <h1 style={{ color: "#1E3A8A", fontSize: "65px", fontWeight: "900", textTransform: "uppercase", letterSpacing: "5px", margin: "0 0 25px 0", textAlign: "center", lineHeight: "1.15" }}>
                  Certificate of <br/> Excellence
                </h1>
 
                {/* Certify Text */}
-               <p style={{ color: "#64748B", fontSize: "20px", letterSpacing: "3px", fontWeight: "500", textTransform: "uppercase", margin: "0 0 25px 0" }}>This is to proudly certify that</p>
+               <p style={{ color: "#64748B", fontSize: "22px", letterSpacing: "3px", fontWeight: "500", textTransform: "uppercase", margin: "0 0 20px 0" }}>This is to proudly certify that</p>
                
                {/* Name Block */}
-               <h2 style={{ color: "#0F172A", fontSize: "52px", fontWeight: "bold", fontFamily: "Georgia, serif", margin: "0 0 10px 0", textAlign: "center", textTransform: "capitalize" }}>
+               <h2 style={{ color: "#0F172A", fontSize: "56px", fontWeight: "bold", fontFamily: "Georgia, serif", margin: "0 0 10px 0", textAlign: "center", textTransform: "capitalize" }}>
                  {stats.name}
                </h2>
-               <div style={{ width: "450px", height: "2px", backgroundColor: "#1E3A8A", margin: "0 auto 30px auto" }}></div>
+               <div style={{ width: "500px", height: "2px", backgroundColor: "#1E3A8A", margin: "0 auto 30px auto" }}></div>
 
                {/* Paragraph Block */}
-               <p style={{ color: "#334155", fontSize: "18px", maxWidth: "700px", textAlign: "center", lineHeight: "1.6", margin: "0 0 0 0" }}>
+               <p style={{ color: "#334155", fontSize: "20px", maxWidth: "800px", textAlign: "center", lineHeight: "1.6", margin: "0 0 0 0" }}>
                  has successfully completed the grueling academic requirements, rigorous training, and comprehensive examinations of the <strong style={{ color: "#1E3A8A" }}>{stats.course}</strong> program with exceptional performance.
                </p>
 
-               {/* Footer Signatures (Pushed to bottom naturally via mt-auto, lifted with mb-10) */}
-               <div style={{ width: "100%", padding: "0 100px", display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: "auto", marginBottom: "60px", boxSizing: "border-box" }}>
+               {/* Footer Signatures with QR Code (Pushed up using mb-60) */}
+               <div style={{ width: "100%", padding: "0 100px", display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: "auto", marginBottom: "50px", boxSizing: "border-box" }}>
                  
                  {/* Left Signature */}
-                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                   <div style={{ width: "220px", height: "1px", backgroundColor: "#94A3B8", marginBottom: "12px" }}></div>
-                   <span style={{ color: "#0F172A", fontWeight: "bold", fontSize: "16px", textTransform: "uppercase", letterSpacing: "1px", margin: 0 }}>Program Director</span>
-                   <span style={{ color: "#64748B", fontSize: "14px", marginTop: "4px" }}>SMAK Research</span>
+                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingBottom: "10px" }}>
+                   <div style={{ width: "240px", height: "1px", backgroundColor: "#94A3B8", marginBottom: "12px" }}></div>
+                   <span style={{ color: "#0F172A", fontWeight: "bold", fontSize: "18px", textTransform: "uppercase", letterSpacing: "1px", margin: 0 }}>Program Director</span>
+                   <span style={{ color: "#64748B", fontSize: "16px", marginTop: "4px", fontStyle: "italic" }}>SMAK Research</span>
                  </div>
                  
-                 {/* Center Seal */}
+                 {/* Center QR Verification Code */}
                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                   <div style={{ width: "80px", height: "80px", border: "3px solid #0A1930", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                     <span style={{ color: "#0A1930", fontWeight: "900", fontSize: "10px", textAlign: "center", textTransform: "uppercase", lineHeight: "1.2", letterSpacing: "2px" }}>Official<br/>Seal</span>
-                   </div>
+                   {qrCodeURI ? (
+                     <div style={{ width: "100px", height: "100px", backgroundColor: "#FFFFFF", padding: "4px", border: "2px solid #E2E8F0", borderRadius: "10px" }}>
+                       <img src={qrCodeURI} alt="Verification QR" style={{ width: "100%", height: "100%" }} />
+                     </div>
+                   ) : (
+                     <div style={{ width: "100px", height: "100px", border: "2px dashed #CBD5E1", borderRadius: "10px" }}></div>
+                   )}
+                   <span style={{ color: "#64748B", fontSize: "10px", marginTop: "8px", textTransform: "uppercase", letterSpacing: "2px", fontWeight: "bold" }}>Scan to Verify</span>
                  </div>
 
-                 {/* Right Signature/Date */}
-                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                   <div style={{ width: "220px", height: "1px", backgroundColor: "#94A3B8", marginBottom: "12px" }}></div>
-                   <span style={{ color: "#0F172A", fontWeight: "bold", fontSize: "16px", textTransform: "uppercase", letterSpacing: "1px", margin: 0 }}>Date Issued</span>
-                   <span style={{ color: "#64748B", fontSize: "14px", marginTop: "4px" }}>{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+                 {/* Right Date */}
+                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingBottom: "10px" }}>
+                   <div style={{ width: "240px", height: "1px", backgroundColor: "#94A3B8", marginBottom: "12px" }}></div>
+                   <span style={{ color: "#0F172A", fontWeight: "bold", fontSize: "18px", textTransform: "uppercase", letterSpacing: "1px", margin: 0 }}>Date Issued</span>
+                   <span style={{ color: "#64748B", fontSize: "16px", marginTop: "4px" }}>{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
                  </div>
 
                </div>
