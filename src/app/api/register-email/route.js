@@ -32,6 +32,7 @@ export async function POST(req) {
     })
 
     // EMAIL TO USER
+    const dashboardLink = `${process.env.NEXT_PUBLIC_APP_URL || 'https://smakresearch.com'}/dashboard?entry=${encodeURIComponent(entry_no)}`
     const generateIdLink = `https://smakresearch.com/generate-id?entry=${encodeURIComponent(entry_no)}&name=${encodeURIComponent(name)}`
 
     await resend.emails.send({
@@ -52,6 +53,16 @@ export async function POST(req) {
 <p>Your SMAK Entry Number:</p>
 <h2 style="color:#2563eb;margin:0">${entry_no}</h2>
 
+<p style="margin-top:25px; padding:15px; background:#f0f9ff; border-radius:10px; border:1px solid #bae6fd;">
+  🎓 <b>Access your Student Portal:</b><br/>
+  Track your progress, download course-specific certificates, and request Letters of Recommendation (LOR) here:
+  <br/><br/>
+  <a href="${dashboardLink}"
+  style="background:#2563eb;color:white;padding:12px 24px;text-decoration:none;border-radius:8px;display:inline-block;font-weight:bold;">
+  Open Dashboard &rarr;
+  </a>
+</p>
+
 <p style="margin-top:20px;">
 👉 Connect with other SMAK members by joining our WhatsApp research community:
 </p>
@@ -60,15 +71,6 @@ export async function POST(req) {
 target="_blank"
 style="background:#25D366;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block;font-weight:bold;">
 Join SMAK WhatsApp Community
-</a>
-
-<p style="margin-top:25px;">
-🎓 Generate your official SMAK Member ID Card:
-</p>
-
-<a href="${generateIdLink}"
-style="background:#2563eb;color:white;padding:12px 22px;text-decoration:none;border-radius:8px;display:inline-block;margin-top:10px;font-weight:bold;">
-Generate Your SMAK ID Card
 </a>
 
 <p style="margin-top:30px">

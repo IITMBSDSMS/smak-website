@@ -30,9 +30,17 @@ export default function Dashboard() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const entryParam = params.get("entry");
+    
     if (entryParam) {
       setEntryNo(entryParam);
       handleLogin(entryParam);
+    } else {
+      // Persistence: Check localStorage if no URL param
+      const savedId = localStorage.getItem("smak_entry_no");
+      if (savedId) {
+        setEntryNo(savedId);
+        handleLogin(savedId);
+      }
     }
   }, []);
 
@@ -70,6 +78,8 @@ export default function Dashboard() {
       } else {
         setUserData(data);
         setIsAuthenticated(true);
+        // Persistence: Save to local storage on successful login
+        localStorage.setItem("smak_entry_no", idToFetch.trim());
         window.history.replaceState(null, '', `?entry=${idToFetch}`);
       }
     } catch (err) {
@@ -435,7 +445,15 @@ export default function Dashboard() {
               )}
             </div>
           </div>
-          <button onClick={() => { setIsAuthenticated(false); setUserData(null); }} className="px-4 py-2 border border-gray-700 text-gray-400 hover:text-white hover:border-white transition rounded-lg text-sm">
+          <button 
+            onClick={() => { 
+              localStorage.removeItem("smak_entry_no");
+              setIsAuthenticated(false); 
+              setUserData(null); 
+              window.history.replaceState(null, '', window.location.pathname);
+            }} 
+            className="px-4 py-2 border border-blue-500/30 bg-blue-500/5 text-blue-400 hover:text-white hover:bg-blue-600 hover:border-blue-500 transition rounded-lg text-sm font-bold tracking-wider uppercase"
+          >
             Sign Out
           </button>
         </header>

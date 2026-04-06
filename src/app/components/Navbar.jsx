@@ -48,6 +48,7 @@ export default function Navbar() {
             <NavLink href="/collaborators">PARTNERS</NavLink>
             <NavLink href="/campus-ambassador">AMBASSADOR</NavLink>
             <NavLink href="/contact">CONTACT</NavLink>
+            <NavLink href="/dashboard">STUDENT PORTAL</NavLink>
           </nav>
           
           <Link href="/join" className="hidden lg:block px-5 py-2 text-xs font-bold text-black-void bg-cyan-bio rounded-full hover:shadow-[0_0_20px_rgba(0,240,255,0.6)] transition-shadow duration-300 interactive uppercase">
@@ -95,6 +96,7 @@ export default function Navbar() {
               <MobileNavLink href="/collaborators" onClick={closeMenu}>PARTNERS</MobileNavLink>
               <MobileNavLink href="/campus-ambassador" onClick={closeMenu}>AMBASSADOR</MobileNavLink>
               <MobileNavLink href="/contact" onClick={closeMenu}>CONTACT</MobileNavLink>
+              <MobileNavLink href="/dashboard" onClick={closeMenu}>STUDENT PORTAL</MobileNavLink>
             </nav>
             <Link 
               href="/join" 
