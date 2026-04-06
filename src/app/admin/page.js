@@ -462,7 +462,9 @@ export default function Admin() {
            attendance: editingMem.attendance,
            quiz_avg: editingMem.quiz_avg,
            cert_status: editingMem.cert_status,
-           lor_status: editingMem.lor_status
+           lor_status: editingMem.lor_status,
+           director_name: editingMem.director_name || null,
+           director_sign: editingMem.director_sign || null,
        };
 
        const { error: insError } = await supabase.from("members").insert([patchedMember]);
@@ -471,6 +473,24 @@ export default function Admin() {
          console.error(insError);
          alert("Warning: Data replaced but override failed: " + insError.message);
        } else {
+         // 4. If LOR just became eligible — notify the student via email!
+         const prevLorStatus = currentMember.lor_status;
+         if (editingMem.lor_status === 'eligible' && prevLorStatus !== 'eligible') {
+           try {
+             await fetch('/api/lor-approved', {
+               method: 'POST',
+               headers: { 'Content-Type': 'application/json' },
+               body: JSON.stringify({
+                 name: patchedMember.name,
+                 email: patchedMember.email,
+                 entry_no: patchedMember.entry_no,
+                 course: patchedMember.course,
+               })
+             });
+           } catch (emailErr) {
+             console.warn('LOR approval email failed silently:', emailErr);
+           }
+         }
          setLmsModalOpen(false);
          fetchMembers(); 
        }
