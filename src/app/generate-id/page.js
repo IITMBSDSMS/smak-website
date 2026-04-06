@@ -1,7 +1,5 @@
 "use client"
-
-"use client"
-
+ 
 import { useState, useEffect, Suspense, useRef } from "react"
 import { useSearchParams } from "next/navigation"
 import QRCode from "qrcode"
@@ -11,12 +9,12 @@ import Navbar from "../components/Navbar"
 import GlassCard from "../components/GlassCard"
 import { motion } from "framer-motion"
 import { createClient } from "@supabase/supabase-js"
-
+ 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
-
+ 
 function GenerateIDComponent() {
   const [name, setName] = useState("John Doe")
   const [phone, setPhone] = useState("+91 00000 00000")
@@ -28,16 +26,18 @@ function GenerateIDComponent() {
   const [generating, setGenerating] = useState(false)
 
   const idCardRef = useRef(null)
-  const searchParams = useSearchParams()
-  const entryFromURL = searchParams.get("entry")
-  const nameParam = searchParams.get("name")
-  const phoneParam = searchParams.get("phone")
-
   useEffect(() => {
-    if (entryFromURL) setEntry(entryFromURL)
-    if (nameParam) setName(nameParam)
-    if (phoneParam) setPhone(phoneParam.replace(" ", "+"))
-  }, [entryFromURL, nameParam, phoneParam])
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const entryFromURL = params.get("entry");
+      const nameParam = params.get("name");
+      const phoneParam = params.get("phone");
+
+      if (entryFromURL) setEntry(entryFromURL);
+      if (nameParam) setName(nameParam);
+      if (phoneParam) setPhone(phoneParam.replace(" ", "+"));
+    }
+  }, [])
 
   useEffect(() => {
     if (!entry) return

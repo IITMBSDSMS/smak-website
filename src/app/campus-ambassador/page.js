@@ -13,8 +13,7 @@ const supabase = createClient(
 )
 
 function CampusAmbassadorForm() {
-  const searchParams = useSearchParams()
-  const source = searchParams.get('source') || 'organic'
+  const [source, setSource] = useState('organic')
 
   const [formData, setFormData] = useState({
     full_name: "",
@@ -33,6 +32,14 @@ function CampusAmbassadorForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitSuccess, setSubmitSuccess] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const s = params.get('source');
+      if (s) setSource(s);
+    }
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -344,7 +351,9 @@ function CampusAmbassadorForm() {
 
 export default function CampusAmbassador() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-black flex items-center justify-center text-white">Loading...</div>}>
+    <Suspense fallback={<div className="min-h-screen bg-[#050B14] flex items-center justify-center text-white font-sans">
+      <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+    </div>}>
       <CampusAmbassadorForm />
     </Suspense>
   )

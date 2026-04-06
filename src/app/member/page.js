@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState, Suspense } from "react"
-import { useSearchParams } from "next/navigation"
 import { createClient } from "@supabase/supabase-js"
 
 const supabase = createClient(
@@ -10,11 +9,16 @@ const supabase = createClient(
 )
 
 function MemberPageComponent(){
-
-  const searchParams = useSearchParams()
-  const entryId = searchParams.get("entry")
-
+  const [entryId, setEntryId] = useState(null)
   const [member,setMember] = useState(null)
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const eId = params.get("entry");
+      if (eId) setEntryId(eId);
+    }
+  }, []);
 
   useEffect(()=>{
 
