@@ -59,7 +59,7 @@ export async function POST(req) {
   <br/><br/>
   <a href="${dashboardLink}"
   style="background:#2563eb;color:white;padding:12px 24px;text-decoration:none;border-radius:8px;display:inline-block;font-weight:bold;">
-  Open Dashboard &rarr;
+  Open Student Portal &rarr;
   </a>
 </p>
 

@@ -52,7 +52,7 @@ export default function Navbar() {
           
           <div className="hidden lg:flex items-center gap-4 z-[70]">
             <Link href="/dashboard" className="px-4 py-2 text-[10px] font-bold text-cyan-bio border border-cyan-bio/30 rounded-full hover:bg-cyan-bio/10 hover:border-cyan-bio transition-all duration-300 uppercase tracking-widest">
-              LMS Portal
+              Student Portal
             </Link>
             <Link href="/join" className="px-5 py-2 text-[10px] font-bold text-black-void bg-cyan-bio rounded-full hover:shadow-[0_0_20px_rgba(0,240,255,0.6)] transition-shadow duration-300 interactive uppercase tracking-widest">
               Join Now
