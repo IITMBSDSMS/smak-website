@@ -1,39 +1,52 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from "@supabase/supabase-js";
+
+// We use service role key if available for backend ops to bypass potential RLS, 
+// otherwise fallback to anon key for standard access.
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function POST(req) {
   try {
-    const { userId, certId } = await req.json();
+    const { entry_no } = await req.json();
 
-    // Verification
-    const { data: cert } = await supabase.from('certificates').select('*').eq('id', certId).eq('user_id', userId).single();
-    if (!cert) return NextResponse.json({ error: 'Certificate intent not found for user' }, { status: 404 });
+    if (!entry_no) {
+      return NextResponse.json({ error: 'Missing entry_no parameter' }, { status: 400 });
+    }
 
-    const { data: user } = await supabase.from('users_mentee').select('full_name, course_enrolled').eq('id', userId).single();
+    // 1. Verify Member & Eligibility
+    const { data: member, error } = await supabase
+      .from('members')
+      .select('name, course, cert_status')
+      .eq('entry_no', entry_no)
+      .single();
 
-    // 1. Generate PDF Server-side using jsPDF/Pdf-lib (Mocked logic here)
-    // const { jsPDF } = await import("jspdf");
-    // const doc = new jsPDF();
-    // doc.text(`Certificate of Completion`, 10, 10);
-    // doc.text(`Awarded to ${user.full_name}`, 10, 20);
-    // const pdfBuffer = doc.output('arraybuffer');
-    
-    const mockPdfUrl = `https://smak.university/verifications/cert_${certId}.pdf`;
+    if (error || !member) {
+      return NextResponse.json({ error: 'Member not found' }, { status: 404 });
+    }
 
-    // 2. Upload to S3/Supabase Storage (Skipped in mock)
-    // await supabase.storage.from('certificates').upload(`cert_${userId}.pdf`, pdfBuffer);
+    if (member.cert_status !== 'eligible' && member.cert_status !== 'generated') {
+       return NextResponse.json({ error: 'Member is not eligible for a certificate' }, { status: 403 });
+    }
 
-    // 3. Update DB
-    await supabase.from('certificates')
-      .update({ generated_status: 'generated', certificate_url: mockPdfUrl })
-      .eq('id', certId);
+    // 2. Generate PDF Server-side (Integration Placeholder)
+    // In production, you would attach jsPDF or simply trigger an external PDF-rendering API here.
+    const mockPdfUrl = `https://smakresearch.com/verifications/cert_${entry_no.replace(' ', '')}.pdf`;
 
-    // 4. (Optional) Email the certificate
-    // sendCertificateEmail(user.email, mockPdfUrl)
+    // 3. Update DB to mark as generated
+    await supabase.from('members')
+      .update({ cert_status: 'generated' })
+      .eq('entry_no', entry_no);
 
-    return NextResponse.json({ success: true, url: mockPdfUrl });
+    return NextResponse.json({ 
+       success: true, 
+       message: 'Certificate successfully generated.',
+       url: mockPdfUrl 
+    });
+
   } catch (error) {
     console.error('Certificate Generation Error:', error);
-    return NextResponse.json({ error: 'Failed to generate certificate' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to generate certificate due to a server error.' }, { status: 500 });
   }
 }
