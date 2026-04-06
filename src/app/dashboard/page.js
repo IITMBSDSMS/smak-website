@@ -166,7 +166,7 @@ export default function Dashboard() {
       <div className="fixed overflow-hidden pointer-events-none -z-50 opacity-0" style={{ top: '-9999px', left: '-9999px' }}>
         <div ref={certRef} style={{ width: "1123px", height: "794px", backgroundColor: "#FFFFFF", padding: "30px", boxSizing: "border-box", fontFamily: 'ui-sans-serif, system-ui, sans-serif' }}>
            <div style={{ width: "100%", height: "100%", border: "12px solid #0A1930", padding: "4px", boxSizing: "border-box" }}>
-             <div style={{ width: "100%", height: "100%", border: "2px solid #CBD5E1", display: "flex", flexDirection: "column", alignItems: "center", position: "relative", paddingTop: "50px", paddingBottom: "50px", boxSizing: "border-box" }}>
+             <div style={{ width: "100%", height: "100%", border: "2px solid #CBD5E1", display: "flex", flexDirection: "column", alignItems: "center", position: "relative", paddingTop: "50px", paddingBottom: "0px", boxSizing: "border-box" }}>
                
                {/* Registration ID Top Right */}
                <div style={{ position: "absolute", top: "25px", right: "35px", color: "#64748B", fontSize: "12px", fontFamily: "monospace", letterSpacing: "2px" }}>
@@ -175,8 +175,8 @@ export default function Dashboard() {
 
                {/* Header & Logo */}
                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "30px" }}>
-                 <div style={{ width: "90px", height: "90px", backgroundColor: "#0A1930", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "20px" }}>
-                   <img src="/logo.png" style={{ width: "60px", height: "60px", objectFit: "contain" }} alt="SMAK Logo" />
+                 <div style={{ width: "100px", height: "100px", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "15px" }}>
+                   <img src="/logo.png" style={{ width: "100%", height: "100%", objectFit: "contain" }} alt="SMAK Logo" />
                  </div>
                  <h3 style={{ color: "#0A1930", fontSize: "18px", letterSpacing: "0.3em", fontWeight: "600", textTransform: "uppercase", margin: 0 }}>Society for Medical Academia & Knowledge</h3>
                </div>
@@ -200,8 +200,8 @@ export default function Dashboard() {
                  has successfully completed the grueling academic requirements, rigorous training, and comprehensive examinations of the <strong style={{ color: "#1E3A8A" }}>{stats.course}</strong> program with exceptional performance.
                </p>
 
-               {/* Footer Signatures (Pushed to bottom naturally via mt-auto) */}
-               <div style={{ width: "100%", padding: "0 100px", display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: "auto", boxSizing: "border-box" }}>
+               {/* Footer Signatures (Pushed to bottom naturally via mt-auto, lifted with mb-10) */}
+               <div style={{ width: "100%", padding: "0 100px", display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: "auto", marginBottom: "60px", boxSizing: "border-box" }}>
                  
                  {/* Left Signature */}
                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
@@ -211,7 +211,7 @@ export default function Dashboard() {
                  </div>
                  
                  {/* Center Seal */}
-                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingBottom: "10px" }}>
+                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                    <div style={{ width: "80px", height: "80px", border: "3px solid #0A1930", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
                      <span style={{ color: "#0A1930", fontWeight: "900", fontSize: "10px", textAlign: "center", textTransform: "uppercase", lineHeight: "1.2", letterSpacing: "2px" }}>Official<br/>Seal</span>
                    </div>
