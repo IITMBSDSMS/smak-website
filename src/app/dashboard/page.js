@@ -22,6 +22,7 @@ export default function Dashboard() {
   
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingLor, setIsGeneratingLor] = useState(false);
+  const [isModulesOpen, setIsModulesOpen] = useState(false);
   const [qrCodeURI, setQrCodeURI] = useState("");
   const certRef = useRef(null);
   const lorRef = useRef(null);
@@ -167,7 +168,18 @@ export default function Dashboard() {
   };
 
   const accessModules = () => {
-    alert("Welcome! The Module Portal is currently under final academic review. Your syllabus will be unlocked shortly.");
+    setIsModulesOpen(true);
+  };
+
+  const getSyllabus = (courseName) => {
+    const modules = {
+      "Medical Research Accelerator": ["Research Fundamentals & Ethics", "Literature Review & Search Strategy", "Data Management & NIH Protocols", "Statistical Analysis in Medicine", "Manuscript Writing & Submission"],
+      "Clinical Trials & Ethics": ["Phases of Clinical Trials", "GCP & Regulatory Compliance", "Patient Recruitment & Consent", "Monitoring & Adverse Event Reporting", "Data Integrity & Post-Trial Monitoring"],
+      "Healthcare AI & Data Science": ["Intro to Health Informatics", "Machine Learning for Diagnostics", "Electronic Health Records (EHR) Analysis", "Predictive Analytics in Medicine", "Ethical AI & Data Privacy"],
+      "Neuroscience Fundamentals": ["Neuroanatomy & Functional Mapping", "Neural Signaling & Synaptic Plasticity", "Cognitive Neuroscience & Memory", "Neuropathology & Current Research", "Neuroimaging Techniques (fMRI/EEG)"],
+      "Public Health & Epidemiology": ["Principles of Epidemiology", "Global Health Policy & Systems", "Biostatistics for Public Health", "Infectious Disease Surveillance", "Environmental Health & Sustainability"]
+    };
+    return modules[courseName] || ["Module 1: Orientation", "Module 2: Core Concepts", "Module 3: Advanced Applications", "Module 4: Final Assessment"];
   };
 
   if (!isAuthenticated && !userData) {
@@ -215,6 +227,9 @@ export default function Dashboard() {
     quizAvg: userData.quiz_avg || 0,
     certStatus: userData.cert_status || "pending",
     lorStatus: userData.lor_status || "pending",
+    status: userData.status || "Active",
+    enrollmentDate: userData.enrollment_date ? new Date(userData.enrollment_date).toLocaleDateString() : "New Enrollment",
+    linkedin: userData.linkedin_url || null
   };
 
   return (
@@ -392,11 +407,27 @@ export default function Dashboard() {
       <div className="max-w-6xl mx-auto mt-28 relative z-10">
         <header className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
-            <div className="text-xs text-blue-400 tracking-widest uppercase mb-2 font-semibold">ID: {userData.entry_no}</div>
+            <div className="flex gap-2 items-center mb-3">
+              <div className="text-xs text-blue-400 tracking-widest uppercase font-semibold">ID: {userData.entry_no}</div>
+              <span className={`text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full border ${
+                stats.status === 'Active' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                stats.status === 'Completed' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                'bg-red-500/10 text-red-400 border-red-500/20'
+              }`}>
+                {stats.status}
+              </span>
+            </div>
             <h1 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-100 to-gray-400 mb-2">
               Welcome back, <span className="text-white">{stats.name.split(' ')[0]}</span>
             </h1>
-            <p className="text-gray-400">Track your progress and access your credentials.</p>
+            <div className="flex items-center gap-4 text-gray-400 text-sm">
+              <p>Member since {stats.enrollmentDate}</p>
+              {stats.linkedin && (
+                <a href={stats.linkedin} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-white transition flex items-center gap-1 group">
+                   LinkedIn <div className="w-3 h-3 border-t border-r border-blue-400 group-hover:border-white transform rotate-45 mt-1"></div>
+                </a>
+              )}
+            </div>
           </div>
           <button onClick={() => { setIsAuthenticated(false); setUserData(null); }} className="px-4 py-2 border border-gray-700 text-gray-400 hover:text-white hover:border-white transition rounded-lg text-sm">
             Sign Out
@@ -465,6 +496,71 @@ export default function Dashboard() {
           </motion.div>
         </div>
       </div>
+    {/* Modules Modal */}
+    {isModulesOpen && (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 sm:p-12">
+        <motion.div 
+          initial={{ opacity: 0 }} 
+          animate={{ opacity: 1 }} 
+          className="absolute inset-0 bg-black/90 backdrop-blur-xl" 
+          onClick={() => setIsModulesOpen(false)}
+        />
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          className="bg-[#0A1220] border border-white/10 rounded-3xl w-full max-w-4xl max-h-[80vh] overflow-hidden flex flex-col relative z-20 shadow-2xl"
+        >
+          <div className="p-8 border-b border-white/10 flex justify-between items-center">
+            <div>
+              <div className="text-xs text-blue-400 font-bold tracking-widest uppercase mb-2">Program Portal</div>
+              <h2 className="text-2xl font-bold text-white">{stats.course}</h2>
+            </div>
+            <button onClick={() => setIsModulesOpen(false)} className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition">
+              <span className="text-2xl text-gray-400">&times;</span>
+            </button>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+            <div className="grid gap-4">
+              {getSyllabus(stats.course).map((module, idx) => (
+                <div key={idx} className="group p-5 bg-[#050A10] border border-white/5 rounded-2xl hover:border-blue-500/40 transition-all flex items-center justify-between">
+                  <div className="flex items-center gap-6">
+                    <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 font-mono font-bold">
+                      0{idx + 1}
+                    </div>
+                    <div>
+                      <h4 className="text-white font-semibold group-hover:text-blue-400 transition-colors">{module}</h4>
+                      <p className="text-xs text-gray-500 uppercase tracking-widest mt-1">Status: Unlocked for Member</p>
+                    </div>
+                  </div>
+                  <div className="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center text-gray-600 group-hover:text-blue-400 group-hover:border-blue-500/30 transition-all">
+                    &rarr;
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div className="mt-12 p-6 bg-blue-500/5 border border-blue-500/10 rounded-2xl">
+              <h5 className="text-blue-400 font-bold flex items-center gap-2 mb-2">
+                <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
+                Official Announcement
+              </h5>
+              <p className="text-sm text-gray-400 leading-relaxed">
+                The interactive video modules for {stats.course} are currently being mastered for UHD streaming. 
+                Your textual resources and assignment submission portals will be integrated directly into each module card above shortly.
+              </p>
+            </div>
+          </div>
+          
+          <div className="p-8 border-t border-white/10 bg-[#050A10] flex justify-end">
+            <button onClick={() => setIsModulesOpen(false)} className="px-6 py-2.5 bg-blue-600 text-white text-sm font-bold rounded-lg hover:bg-blue-500 transition-all">
+              Return to Dashboard
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    )}
+
     </div>
   );
 }
