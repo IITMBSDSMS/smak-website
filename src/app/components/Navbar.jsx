@@ -41,19 +41,23 @@ export default function Navbar() {
             </h1>
           </Link>
           
-          <nav className="hidden lg:flex items-center gap-8 text-sm font-medium tracking-wide">
+          <nav className="hidden lg:flex items-center gap-6 text-[10px] font-bold tracking-widest text-gray-400">
             <NavLink href="/">HOME</NavLink>
             <NavLink href="/research-club">RESEARCH CLUB</NavLink>
             <NavLink href="/events">EVENTS</NavLink>
             <NavLink href="/collaborators">PARTNERS</NavLink>
             <NavLink href="/campus-ambassador">AMBASSADOR</NavLink>
             <NavLink href="/contact">CONTACT</NavLink>
-            <NavLink href="/dashboard">STUDENT PORTAL</NavLink>
           </nav>
           
-          <Link href="/join" className="hidden lg:block px-5 py-2 text-xs font-bold text-black-void bg-cyan-bio rounded-full hover:shadow-[0_0_20px_rgba(0,240,255,0.6)] transition-shadow duration-300 interactive uppercase">
-            Join Now
-          </Link>
+          <div className="hidden lg:flex items-center gap-4 z-[70]">
+            <Link href="/dashboard" className="px-4 py-2 text-[10px] font-bold text-cyan-bio border border-cyan-bio/30 rounded-full hover:bg-cyan-bio/10 hover:border-cyan-bio transition-all duration-300 uppercase tracking-widest">
+              LMS Portal
+            </Link>
+            <Link href="/join" className="px-5 py-2 text-[10px] font-bold text-black-void bg-cyan-bio rounded-full hover:shadow-[0_0_20px_rgba(0,240,255,0.6)] transition-shadow duration-300 interactive uppercase tracking-widest">
+              Join Now
+            </Link>
+          </div>
 
           {/* Mobile menu button */}
           <button 
