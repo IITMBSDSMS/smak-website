@@ -508,137 +508,97 @@ export default function Admin() {
   }
 
   return (
-    <main className="min-h-screen bg-black text-white flex justify-center py-16">
-      <div className="w-full max-w-6xl px-6">
+    <main className="min-h-screen bg-[#050B14] text-white flex justify-center py-20 relative overflow-hidden font-sans">
+      
+      {/* Background ambient light */}
+      <div className="absolute inset-0 bg-blue-900/5 blur-[150px] z-0 pointer-events-none rounded-full top-[-10%] left-[-10%] w-[120%] h-[120%]"></div>
+      
+      <div className="w-full max-w-7xl px-8 relative z-10">
 
-
-        <h1 className="text-4xl font-bold mb-8">Admin Dashboard</h1>
-
-        {/* Analytics Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-
-          <div className="bg-[#0b0b0b] border border-gray-800 rounded-xl p-4">
-            <div className="text-gray-400 text-sm">Members</div>
-            <div className="text-2xl font-bold">{members.length}</div>
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-cyan-500/20 pb-6 mb-10 gap-4">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-400/30 text-xs text-cyan-400 mb-4 font-mono tracking-widest uppercase bg-cyan-900/10 backdrop-blur-md">
+               <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span> Authorized Terminal
+            </div>
+            <h1 className="text-4xl md:text-5xl font-sans tracking-tight text-white m-0">
+               Central <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">Command</span>
+            </h1>
           </div>
-
-          <div className="bg-[#0b0b0b] border border-gray-800 rounded-xl p-4">
-            <div className="text-gray-400 text-sm">Leaders</div>
-            <div className="text-2xl font-bold">{leaders.length}</div>
-          </div>
-
-          <div className="bg-[#0b0b0b] border border-gray-800 rounded-xl p-4">
-            <div className="text-gray-400 text-sm">Events</div>
-            <div className="text-2xl font-bold">{events.length}</div>
-          </div>
-
-          <div className="bg-[#0b0b0b] border border-gray-800 rounded-xl p-4">
-            <div className="text-gray-400 text-sm">Collaborators</div>
-            <div className="text-2xl font-bold">{collabs.length}</div>
-          </div>
-
+          <button onClick={() => { localStorage.removeItem('adminAuth'); setIsAuthenticated(false); }} className="px-5 py-2.5 bg-red-500/10 border border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white hover:border-red-500 hover:shadow-[0_0_15px_rgba(239,68,68,0.4)] transition-all rounded-lg text-xs uppercase tracking-widest font-bold">Terminate Session</button>
         </div>
 
-        {/* Tabs */}
-        <div className="flex gap-4 mb-8">
-          <button
-            onClick={() => setTab("members")}
-            className={`px-4 py-2 rounded-md ${tab==="members" ? "bg-white text-black" : "bg-[#111]"}`}
-          >
-            Members
-          </button>
+        {/* METRICS CARDS */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
+          {[
+            { label: "Members", val: members.length },
+            { label: "Leaders", val: leaders.length },
+            { label: "Events", val: events.length },
+            { label: "Collaborators", val: collabs.length }
+          ].map((m, i) => (
+            <div key={i} className="bg-gradient-to-br from-[#0A1220]/80 to-[#050A10]/90 backdrop-blur-xl border border-blue-500/20 rounded-2xl p-6 shadow-2xl relative overflow-hidden group">
+              <div className="absolute inset-0 bg-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <div className="text-blue-400 text-xs font-mono uppercase tracking-widest mb-2 flex items-center justify-between">
+                {m.label} 
+                <span className="w-8 h-px bg-blue-500/30"></span>
+              </div>
+              <div className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-500">{m.val}</div>
+            </div>
+          ))}
+        </div>
 
-          <button
-            onClick={() => setTab("leaders")}
-            className={`px-4 py-2 rounded-md ${tab==="leaders" ? "bg-white text-black" : "bg-[#111]"}`}
-          >
-            Leadership
-          </button>
-
-          <button
-            onClick={() => setTab("events")}
-            className={`px-4 py-2 rounded-md ${tab==="events" ? "bg-white text-black" : "bg-[#111]"}`}
-          >
-            Events
-          </button>
-
-          <button
-            onClick={() => setTab("collabs")}
-            className={`px-4 py-2 rounded-md ${tab==="collabs" ? "bg-white text-black" : "bg-[#111]"}`}
-          >
-            Collaborators
-          </button>
-
-          <button
-            onClick={() => setTab("mentors")}
-            className={`px-4 py-2 rounded-md ${tab==="mentors" ? "bg-white text-black" : "bg-[#111]"}`}
-          >
-            Mentors
-          </button>
-
-          <button
-            onClick={() => setTab("scholars")}
-            className={`px-4 py-2 rounded-md ${tab==="scholars" ? "bg-white text-black" : "bg-[#111]"}`}
-          >
-            Scholars
-          </button>
-
-          <button
-            onClick={() => setTab("board")}
-            className={`px-4 py-2 rounded-md ${tab==="board" ? "bg-white text-black" : "bg-[#111]"}`}
-          >
-            Board
-          </button>
+        {/* NAVIGATION TABS */}
+        <div className="flex flex-wrap gap-3 bg-[#0A1220]/50 p-2.5 rounded-2xl border border-white/5 backdrop-blur-md w-max mb-10 shadow-xl">
+          {["members", "leaders", "events", "collabs", "mentors", "scholars", "board"].map(t => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all duration-300 ${tab === t 
+                ? 'bg-gradient-to-r from-blue-600 to-blue-400 text-white shadow-[0_0_20px_rgba(37,99,235,0.4)]' 
+                : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+            >
+              {t === "collabs" ? "Collaborators" : t}
+            </button>
+          ))}
         </div>
 
         {/* MEMBERS TAB */}
-
         {tab === "members" && (
-
-          <div className="bg-[#0b0b0b] border border-gray-800 rounded-xl overflow-hidden">
-
-            <div className="px-6 py-4 border-b border-gray-800 flex justify-between">
-
-              <span>Total Members: {members.length}</span>
-
-              <div className="flex gap-3">
-
-                <input
-                  placeholder="Search members..."
-                  value={search}
-                  onChange={(e)=>setSearch(e.target.value)}
-                  className="bg-black border border-gray-700 px-3 py-2 rounded-md"
+          <div className="bg-[#0A1220]/80 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl relative">
+            
+            <div className="p-6 border-b border-white/5 flex flex-col md:flex-row justify-between gap-4 items-center bg-[#050A10]/50">
+              <h3 className="text-lg text-gray-300 font-mono tracking-widest">TOTAL AGENTS: <span className="text-blue-400 font-bold">{members.length}</span></h3>
+              
+              <div className="flex gap-4 w-full md:w-auto">
+                <input 
+                  type="text" 
+                  placeholder="Search network..." 
+                  value={search} 
+                  onChange={e=>setSearch(e.target.value)} 
+                  className="bg-black/50 border border-gray-800 rounded-lg px-4 py-2.5 text-white flex-1 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 transition-all"
                 />
-
-                <button
-                  onClick={exportCSV}
-                  className="bg-white text-black px-4 py-2 rounded-md"
-                >
-                  Export CSV
+                <button onClick={exportCSV} className="bg-white text-black px-6 py-2.5 rounded-lg font-bold hover:bg-gray-200 transition-colors tracking-wide text-sm whitespace-nowrap">
+                  EXPORT CSV
                 </button>
-
               </div>
-
             </div>
 
             <div className="overflow-x-auto">
-
-              <table className="w-full text-left text-sm">
-
-                <thead className="bg-[#111827]">
+              <table className="w-full text-left text-sm whitespace-nowrap">
+                <thead className="bg-[#050A10] border-b border-white/10 text-xs uppercase tracking-widest text-gray-400">
                   <tr>
-                    <th className="p-4">Name</th>
-                    <th className="p-4">Email</th>
-                    <th className="p-4">Phone</th>
-                    <th className="p-4">Entry No</th>
-                    <th className="p-4">College</th>
-                    <th className="p-4">Year</th>
-                    <th className="p-4">Interest</th>
-                    <th className="p-4">Actions</th>
+                    <th className="p-5 font-semibold">Name</th>
+                    <th className="p-5 font-semibold">Email</th>
+                    <th className="p-5 font-semibold">Phone</th>
+                    <th className="p-5 font-semibold text-blue-400">Entry No</th>
+                    <th className="p-5 font-semibold">College</th>
+                    <th className="p-5 font-semibold">Year</th>
+                    <th className="p-5 font-semibold">Interest</th>
+                    <th className="p-5 font-semibold text-right">Actions</th>
                   </tr>
                 </thead>
 
-                <tbody>
+                <tbody className="divide-y divide-gray-800/50">
 
                   {members
                     .filter(m =>
@@ -646,26 +606,26 @@ export default function Admin() {
                       m.email?.toLowerCase().includes(search.toLowerCase())
                     )
                     .map((m, i) => (
-                      <tr key={m.id} className="border-t border-gray-800">
-                        <td className="p-4">{m.name}</td>
-                        <td className="p-4">{m.email}</td>
-                        <td className="p-4">{m.phone}</td>
-                        <td className="p-4">{m.entry_no}</td>
-                        <td className="p-4">{m.college}</td>
-                        <td className="p-4">{m.year}</td>
-                        <td className="p-4">{m.interest}</td>
-                        <td className="p-4 flex gap-3">
+                      <tr key={m.id} className="hover:bg-blue-900/10 transition-colors group">
+                        <td className="p-5 font-medium text-gray-200">{m.name}</td>
+                        <td className="p-5 text-gray-400">{m.email}</td>
+                        <td className="p-5 font-mono text-gray-400">{m.phone}</td>
+                        <td className="p-5 font-mono text-blue-400 font-bold tracking-wider">{m.entry_no}</td>
+                        <td className="p-5 text-gray-400 truncate max-w-xs">{m.college}</td>
+                        <td className="p-5 text-gray-400">{m.year}</td>
+                        <td className="p-5 text-gray-500 truncate max-w-[150px]">{m.interest}</td>
+                        <td className="p-5 flex gap-2 justify-end opacity-80 group-hover:opacity-100 transition-opacity">
                           {m.entry_no ? (
                             <>
                               <a
                                 href={`/member/${m.entry_no}`}
-                                className="bg-blue-500 text-white px-3 py-1 rounded"
+                                className="bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-1.5 rounded-md transition-all text-xs font-bold uppercase tracking-widest border border-blue-500/20"
                               >
                                 Verify
                               </a>
                               <a
                                 href={`/generate-id?entry=${m.entry_no}&name=${encodeURIComponent(m.name || "")}&phone=${encodeURIComponent(m.phone || "")}`}
-                                className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded transition"
+                                className="bg-green-600/20 text-green-400 hover:bg-green-600 hover:text-white px-3 py-1.5 rounded-md transition-all text-xs font-bold uppercase tracking-widest border border-green-500/20"
                               >
                                 ID Card
                               </a>
@@ -674,17 +634,17 @@ export default function Admin() {
                                   setEditingMem(m)
                                   setLmsModalOpen(true)
                                 }}
-                                className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded transition font-bold"
+                                className="bg-purple-600/20 text-purple-400 hover:bg-purple-600 hover:text-white px-3 py-1.5 rounded-md transition-all text-xs font-bold uppercase tracking-widest border border-purple-500/20"
                               >
                                 Edit LMS
                               </button>
                             </>
                           ) : (
-                            <span className="text-yellow-400 text-xs">No Entry ID</span>
+                            <span className="text-xs text-yellow-500 px-2 py-1 bg-yellow-500/10 rounded-md border border-yellow-500/20 font-bold uppercase tracking-widest">Waitlist</span>
                           )}
                           <button
                             onClick={() => deleteMember(m.id)}
-                            className="bg-red-500 text-white px-3 py-1 rounded"
+                            className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded-md transition-all text-xs font-bold uppercase tracking-widest border border-red-500/20"
                           >
                             Delete
                           </button>

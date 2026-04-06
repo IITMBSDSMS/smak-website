@@ -34,3 +34,8 @@ ALTER FUNCTION public.generate_smak_entry() SET search_path = public;
 -- However, if it's meant to be a public signup form, this warning is expected and acceptable.
 -- If you want to secure it further, you can drop the overly permissive policy and use Anon Key checks,
 -- but for a simple public intake form, you can safely ignore the "RLS Policy Always True" warning!
+
+-- 4. FIX: Missing LOR Configuration Columns
+-- Run this to actually create the missing columns so data persists from Admin panel
+ALTER TABLE public.members ADD COLUMN IF NOT EXISTS director_name text;
+ALTER TABLE public.members ADD COLUMN IF NOT EXISTS director_sign text;

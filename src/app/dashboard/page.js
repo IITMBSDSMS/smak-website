@@ -149,11 +149,20 @@ export default function Dashboard() {
     }
   };
 
-  const requestLOR = () => {
+  const requestLOR = async () => {
     if (userData.lor_status === 'eligible') {
        generateLOR();
     } else {
-       alert(`Success! Email sent to Admin to manually review LOR eligibility for ${userData.entry_no}. Our team will reach out directly.`);
+       try {
+         await fetch("/api/lor-request", {
+           method: "POST",
+           headers: { "Content-Type": "application/json" },
+           body: JSON.stringify({ entry_no: userData.entry_no, name: userData.name })
+         });
+         alert(`Success! Email sent to Admin to manually review LOR eligibility for ${userData.entry_no}. Our team will reach out directly.`);
+       } catch(err) {
+         alert("Failed to send request. Please try again.");
+       }
     }
   };
 
