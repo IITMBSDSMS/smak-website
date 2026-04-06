@@ -447,17 +447,10 @@ export default function Admin() {
     // update mutation by safely deleting the row and re-inserting it completely intact with our new overrides!
     
     try {
-       // 1. Lock the current data securely to prevent data loss
-       const { data: currentMember, error: fetchErr } = await supabase.from("members").select("*").eq("id", editingMem.id).single();
-       if (fetchErr || !currentMember) return alert("Failed to fetch current member data securely.");
-
-       // 2. Safely wipe the targeted row to prep for overwrite
-       const { error: delError } = await supabase.from("members").delete().eq("id", editingMem.id);
-       if (delError) return alert("Security block: Unable to initialize override mechanism.");
-
-       // 3. Re-insert the exact same row (preserving ID and timestamps) with patched LMS data!
+       // Use upsert with onConflict on 'id' — this atomically updates the row
+       // without needing to delete first, bypassing the RLS delete restriction
        const patchedMember = {
-           ...currentMember,
+           id: editingMem.id,
            course: editingMem.course,
            attendance: editingMem.attendance,
            quiz_avg: editingMem.quiz_avg,
@@ -467,24 +460,26 @@ export default function Admin() {
            director_sign: editingMem.director_sign || null,
        };
 
-       const { error: insError } = await supabase.from("members").insert([patchedMember]);
+       const { error: upsertError } = await supabase
+         .from("members")
+         .upsert([patchedMember], { onConflict: 'id' });
 
-       if (insError) {
-         console.error(insError);
-         alert("Warning: Data replaced but override failed: " + insError.message);
+       if (upsertError) {
+         console.error(upsertError);
+         alert("Save failed: " + upsertError.message);
        } else {
-         // 4. If LOR just became eligible — notify the student via email!
-         const prevLorStatus = currentMember.lor_status;
+         // If LOR just became eligible — notify the student via email!
+         const prevLorStatus = editingMem._prevLorStatus;
          if (editingMem.lor_status === 'eligible' && prevLorStatus !== 'eligible') {
            try {
              await fetch('/api/lor-approved', {
                method: 'POST',
                headers: { 'Content-Type': 'application/json' },
                body: JSON.stringify({
-                 name: patchedMember.name,
-                 email: patchedMember.email,
-                 entry_no: patchedMember.entry_no,
-                 course: patchedMember.course,
+                 name: editingMem.name,
+                 email: editingMem.email,
+                 entry_no: editingMem.entry_no,
+                 course: editingMem.course,
                })
              });
            } catch (emailErr) {
@@ -651,7 +646,7 @@ export default function Admin() {
                               </a>
                               <button
                                 onClick={() => {
-                                  setEditingMem(m)
+                                  setEditingMem({ ...m, _prevLorStatus: m.lor_status })
                                   setLmsModalOpen(true)
                                 }}
                                 className="bg-purple-600/20 text-purple-400 hover:bg-purple-600 hover:text-white px-3 py-1.5 rounded-md transition-all text-xs font-bold uppercase tracking-widest border border-purple-500/20"
