@@ -1,58 +1,102 @@
-import { supabase } from './supabase';
+import { createClient } from '@supabase/supabase-js';
 
-export async function checkEligibility(userId, courseId) {
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
+
+// Default eligibility thresholds (can be overridden per course in future)
+const DEFAULT_THRESHOLDS = {
+  cert: { attendance: 70, quiz: 50 },
+  lor:  { attendance: 85, quiz: 75 },
+};
+
+/**
+ * Run eligibility check for a single member by entry_no.
+ * Reads attendance% and quiz_avg% from members table.
+ * Auto-updates cert_status and lor_status if criteria are met.
+ * Never downgrades 'generated' status — only upgrades to 'eligible'.
+ */
+export async function runEligibilityCheck(entryNo) {
   try {
-    // 1. Fetch Course Thresholds
-    const { data: course } = await supabase.from('courses').select('*').eq('id', courseId).single();
-    if (!course) throw new Error('Course not found');
+    // 1. Fetch the member's current data
+    const { data: member, error } = await supabase
+      .from('members')
+      .select('id, attendance, quiz_avg, cert_status, lor_status')
+      .eq('entry_no', entryNo)
+      .single();
 
-    // 2. Fetch User Attendance Aggregation
-    // In a real app we might need to count by unique session IDs, but this serves as the demo logic
-    const { data: attendanceData } = await supabase.from('attendance').select('duration_attended').eq('user_id', userId);
-    
-    // Evaluate total attendance percentage (Simplified logic: sum of durations / expected total duration)
-    // For sake of MVP, let's assume we store the "percentage" directly or calculate based on count:
-    const totalSessions = 20; // Hardcoded dummy logic
-    const attendedSessions = attendanceData ? attendanceData.length : 0;
-    const attendancePercent = (attendedSessions / totalSessions) * 100;
-
-    // 3. Fetch User Quiz Scores Aggregation
-    const { data: quizData } = await supabase.from('assessments').select('score').eq('user_id', userId);
-    const avgScore = quizData && quizData.length > 0 
-      ? quizData.reduce((acc, q) => acc + parseFloat(q.score), 0) / quizData.length 
-      : 0;
-
-    // 4. Evaluate Thresholds
-    const isCertEligible = attendancePercent >= course.attendance_req_percent && avgScore >= course.quiz_weightage_percent;
-    const isLorEligible = attendancePercent >= course.lor_attendance_req && avgScore >= course.lor_quiz_req;
-
-    // 5. Update Status in Tables
-    if (isCertEligible) {
-      // Upsert Certificate intent (pending generation if not exists)
-      const { data: existingCert } = await supabase.from('certificates').select('id').eq('user_id', userId).single();
-      if (!existingCert) {
-        await supabase.from('certificates').insert([{ user_id: userId, generated_status: 'pending' }]);
-        // Note: Could trigger certificate generation PDF function here.
-      }
+    if (error || !member) {
+      throw new Error(`Member not found: ${entryNo}`);
     }
 
-    if (isLorEligible) {
-      // Upsert LOR intent
-      const { data: existingLor } = await supabase.from('lors').select('id').eq('user_id', userId).single();
-      if (!existingLor) {
-        await supabase.from('lors').insert([{ user_id: userId, eligibility_status: 'eligible' }]);
-      }
+    const attendance = parseFloat(member.attendance) || 0;
+    const quizAvg    = parseFloat(member.quiz_avg)    || 0;
+
+    const t = DEFAULT_THRESHOLDS;
+
+    // 2. Calculate new eligibility
+    const certEligible = attendance >= t.cert.attendance && quizAvg >= t.cert.quiz;
+    const lorEligible  = attendance >= t.lor.attendance  && quizAvg >= t.lor.quiz;
+
+    // 3. Build the update payload — never downgrade 'generated' or 'rejected' status
+    const updates = {};
+    const protectedStatuses = ['generated', 'rejected'];
+
+    if (certEligible && !protectedStatuses.includes(member.cert_status)) {
+      updates.cert_status = 'eligible';
+    }
+    if (lorEligible && !protectedStatuses.includes(member.lor_status)) {
+      updates.lor_status = 'eligible';
+    }
+
+    // 4. Apply updates if any eligibility changed
+    let updated = false;
+    if (Object.keys(updates).length > 0) {
+      const { error: updateError } = await supabase
+        .from('members')
+        .update(updates)
+        .eq('id', member.id);
+
+      if (updateError) throw updateError;
+      updated = true;
     }
 
     return {
-      attendancePercent,
-      avgScore,
-      isCertEligible,
-      isLorEligible
+      success: true,
+      entryNo,
+      attendance,
+      quizAvg,
+      certEligible,
+      lorEligible,
+      updated,
+      changes: updates,
     };
 
-  } catch (error) {
-    console.error('Eligibility Engine Error:', error);
-    throw error;
+  } catch (err) {
+    console.error('Eligibility Engine Error:', err);
+    return { success: false, error: err.message };
   }
+}
+
+/**
+ * Run eligibility check for ALL members (batch mode).
+ * Useful for periodic sweeps.
+ */
+export async function runEligibilityForAll() {
+  const { data: members, error } = await supabase
+    .from('members')
+    .select('entry_no');
+
+  if (error || !members) return { success: false, error: error?.message };
+
+  const results = await Promise.allSettled(
+    members.map(m => runEligibilityCheck(m.entry_no))
+  );
+
+  return {
+    success: true,
+    total: members.length,
+    results: results.map(r => r.value || r.reason),
+  };
 }

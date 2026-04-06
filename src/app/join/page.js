@@ -17,7 +17,10 @@ export default function Join() {
     email: "",
     college: "",
     interest: "",
-    phone: ""
+    phone: "",
+    year: "",
+    course: "",
+    linkedin_url: ""
   })
   
   const [loading, setLoading] = useState(false)
@@ -47,8 +50,12 @@ export default function Join() {
             college: formData.college,
             interest: formData.interest,
             phone: formData.phone,
-            year: "1st Year",
-            entry_no: generatedEntryNo
+            year: formData.year || "1st Year",
+            course: formData.course || null,
+            linkedin_url: formData.linkedin_url || null,
+            entry_no: generatedEntryNo,
+            status: 'Active',
+            enrollment_date: new Date().toISOString(),
           }
         ])
 
@@ -154,9 +161,42 @@ export default function Join() {
                     </div>
                   </div>
 
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-xs text-blue-neural font-mono uppercase tracking-widest">Year of Study</label>
+                      <select name="year" value={formData.year} onChange={handleChange} required className="w-full bg-black-void/50 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-bio transition-colors">
+                        <option value="" disabled>Select Year</option>
+                        <option value="1st Year">1st Year</option>
+                        <option value="2nd Year">2nd Year</option>
+                        <option value="3rd Year">3rd Year</option>
+                        <option value="4th Year">4th Year</option>
+                        <option value="PG / Postgraduate">PG / Postgraduate</option>
+                        <option value="Research Scholar">Research Scholar</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs text-blue-neural font-mono uppercase tracking-widest">Course / Program</label>
+                      <select name="course" value={formData.course} onChange={handleChange} required className="w-full bg-black-void/50 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-bio transition-colors">
+                        <option value="" disabled>Select Program</option>
+                        <option value="Medical Research Accelerator">Medical Research Accelerator</option>
+                        <option value="Clinical Trials & Ethics">Clinical Trials & Ethics</option>
+                        <option value="Healthcare AI & Data Science">Healthcare AI & Data Science</option>
+                        <option value="Neuroscience Fundamentals">Neuroscience Fundamentals</option>
+                        <option value="Public Health & Epidemiology">Public Health & Epidemiology</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                  </div>
+
                   <div className="space-y-2">
                     <label className="text-xs text-blue-neural font-mono uppercase tracking-widest">Primary Objective / Statement</label>
-                    <textarea name="interest" value={formData.interest} onChange={handleChange} required rows="4" placeholder="Brief statement of purpose..." className="w-full bg-black-void/50 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-bio transition-colors resize-none"></textarea>
+                    <textarea name="interest" value={formData.interest} onChange={handleChange} required rows="3" placeholder="Brief statement of purpose..." className="w-full bg-black-void/50 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-bio transition-colors resize-none"></textarea>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs text-blue-neural font-mono uppercase tracking-widest">LinkedIn Profile <span className="text-gray-600 normal-case">(optional)</span></label>
+                    <input type="url" name="linkedin_url" value={formData.linkedin_url} onChange={handleChange} placeholder="https://linkedin.com/in/yourname" className="w-full bg-black-void/50 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-bio transition-colors" />
                   </div>
 
                   <button type="submit" disabled={loading} className="w-full py-4 bg-cyan-bio text-black-void font-bold text-sm tracking-widest uppercase rounded-lg hover:shadow-[0_0_20px_rgba(0,240,255,0.6)] hover:bg-white transition-all interactive disabled:opacity-50 flex items-center justify-center gap-2">

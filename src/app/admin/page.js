@@ -442,13 +442,8 @@ export default function Admin() {
     e.preventDefault()
     if(!editingMem) return;
 
-    // Supabase strict Row-Level-Security (RLS) is blocking .update() on public members.
-    // However, it allows .insert() and .delete(). Therefore, we can achieve an identical 
-    // update mutation by safely deleting the row and re-inserting it completely intact with our new overrides!
-    
     try {
-       // Use targeted .update() — only modifies the columns we specify,
-       // leaving name/email/phone/etc. completely untouched
+       // Use targeted .update() — only modifies the columns we specify
        const { error: updateError } = await supabase
          .from("members")
          .update({
@@ -457,6 +452,7 @@ export default function Admin() {
            quiz_avg: editingMem.quiz_avg,
            cert_status: editingMem.cert_status,
            lor_status: editingMem.lor_status,
+           status: editingMem.status || 'Active',
            director_name: editingMem.director_name || null,
            director_sign: editingMem.director_sign || null,
          })
@@ -466,10 +462,22 @@ export default function Admin() {
          console.error(updateError);
          alert("Save failed: " + updateError.message);
        } else {
-         // If LOR just became eligible — notify the student via email!
-         if (editingMem.lor_status === 'eligible' && editingMem._prevLorStatus !== 'eligible') {
-           try {
-             await fetch('/api/lor-approved', {
+         // AUTO-RUN ELIGIBILITY ENGINE — recalculates cert/lor based on thresholds
+         try {
+           const eligResult = await fetch('/api/run-eligibility', {
+             method: 'POST',
+             headers: { 'Content-Type': 'application/json' },
+             body: JSON.stringify({ entry_no: editingMem.entry_no })
+           }).then(r => r.json());
+
+           // If LOR just became eligible via engine OR admin manually — send email
+           const lorBecameEligible = (
+             (eligResult?.changes?.lor_status === 'eligible') ||
+             (editingMem.lor_status === 'eligible' && editingMem._prevLorStatus !== 'eligible')
+           );
+
+           if (lorBecameEligible) {
+             fetch('/api/lor-approved', {
                method: 'POST',
                headers: { 'Content-Type': 'application/json' },
                body: JSON.stringify({
@@ -478,11 +486,12 @@ export default function Admin() {
                  entry_no: editingMem.entry_no,
                  course: editingMem.course,
                })
-             });
-           } catch (emailErr) {
-             console.warn('LOR approval email failed silently:', emailErr);
+             }).catch(e => console.warn('LOR email error:', e));
            }
+         } catch (engErr) {
+           console.warn('Eligibility engine call failed silently:', engErr);
          }
+
          setLmsModalOpen(false);
          fetchMembers();
        }
@@ -712,13 +721,23 @@ export default function Admin() {
                   </div>
                 </div>
 
-                <div>
-                  <label className="text-xs text-gray-400 mb-1 block">LOR Status</label>
-                  <select value={editingMem.lor_status || 'pending'} onChange={e=>setEditingMem({...editingMem, lor_status: e.target.value})} className="w-full bg-black border border-gray-800 rounded px-3 py-2.5 text-white">
-                    <option value="pending">Pending</option>
-                    <option value="eligible">Eligible</option>
-                    <option value="generated">Generated</option>
-                  </select>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs text-gray-400 mb-1 block">LOR Status</label>
+                    <select value={editingMem.lor_status || 'pending'} onChange={e=>setEditingMem({...editingMem, lor_status: e.target.value})} className="w-full bg-black border border-gray-800 rounded px-3 py-2.5 text-white">
+                      <option value="pending">Pending</option>
+                      <option value="eligible">Eligible</option>
+                      <option value="generated">Generated</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-400 mb-1 block">Member Status</label>
+                    <select value={editingMem.status || 'Active'} onChange={e=>setEditingMem({...editingMem, status: e.target.value})} className="w-full bg-black border border-gray-800 rounded px-3 py-2.5 text-white">
+                      <option value="Active">🟢 Active</option>
+                      <option value="Completed">✅ Completed</option>
+                      <option value="Dropped">🔴 Dropped</option>
+                    </select>
+                  </div>
                 </div>
 
                 <div className="pt-4 border-t border-white/5 space-y-4">

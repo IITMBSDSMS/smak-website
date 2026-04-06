@@ -39,3 +39,14 @@ ALTER FUNCTION public.generate_smak_entry() SET search_path = public;
 -- Run this to actually create the missing columns so data persists from Admin panel
 ALTER TABLE public.members ADD COLUMN IF NOT EXISTS director_name text;
 ALTER TABLE public.members ADD COLUMN IF NOT EXISTS director_sign text;
+
+-- 5. FIX: Missing User Entity Columns
+-- Completing the Master Data Model user entity
+ALTER TABLE public.members ADD COLUMN IF NOT EXISTS status text DEFAULT 'Active';
+ALTER TABLE public.members ADD COLUMN IF NOT EXISTS enrollment_date timestamp DEFAULT now();
+ALTER TABLE public.members ADD COLUMN IF NOT EXISTS linkedin_url text;
+
+-- 6. RLS FIX: Allow admin to update member records
+-- Required for the .update() calls from Admin Panel to work
+CREATE POLICY "Enable update for all users" ON public.members
+FOR UPDATE USING (true) WITH CHECK (true);
