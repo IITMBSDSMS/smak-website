@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase';
 import crypto from 'crypto';
+import { sendInvoiceEmail, sendKitAndSOPEmail } from '@/lib/email-automation';
 
 // Use service role if available for backend webhooks
 const supabase = createClient(
@@ -33,20 +34,28 @@ export async function POST(req) {
       const { entry_no } = paymentEntity.notes || {};
 
       if (entry_no) {
-        // 2. Update Member Status
-        const { error: dbError } = await supabase
-          .from('members')
-          .update({ 
-            payment_status: 'SUCCESS',
-            status: 'Active' // Move them from pending to active
-            // Additionally generating an invoice would go here
-          })
-          .eq('entry_no', entry_no);
+        // Fetch member info securely
+        const { data: member } = await supabase.from('members').select('email, name').eq('entry_no', entry_no).single();
 
-        if (dbError) throw dbError;
+        if (member) {
+          // 2. Update Member Status
+          const invoiceId = `INV-${Date.now()}`;
+          const { error: dbError } = await supabase
+            .from('members')
+            .update({ 
+              payment_status: 'SUCCESS',
+              status: 'Active' 
+            })
+            .eq('entry_no', entry_no);
 
-        // 3. Send Success / Kit Email (Logic to be built in email-automation.js)
-        console.log(`Payment confirmed for ${entry_no}`);
+          if (dbError) throw dbError;
+
+          // 3. Send Success & Kit Emails securely
+          await sendInvoiceEmail({ to: member.email, name: member.name, invoiceId });
+          await sendKitAndSOPEmail({ to: member.email, name: member.name });
+          
+          console.log(`Payment confirmed & emails sent for ${entry_no}`);
+        }
       }
     }
 

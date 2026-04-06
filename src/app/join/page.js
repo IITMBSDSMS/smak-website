@@ -112,6 +112,51 @@ export default function Join() {
         throw new Error("Failed to send confirmation email. " + await emailRes.text())
       }
 
+      // 4. Trigger Razorpay Payment Modal
+      try {
+        const orderRes = await fetch("/api/payment/create-order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ amount: 500, entry_no: generatedEntryNo }), // 500 INR standard MVP fee
+        });
+        const orderData = await orderRes.json();
+
+        if (orderData.success && window.Razorpay) {
+          const options = {
+            key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_dummykey", 
+            amount: orderData.order.amount,
+            currency: "INR",
+            name: "SMAK Research",
+            description: `Verification Fee - ${formData.course || 'General'}`,
+            order_id: orderData.order.id,
+            handler: function (response) {
+               // Payment succeeded, the backend webhook will catch this and mark db
+               setSuccess(true);
+               setLoading(false);
+            },
+            prefill: {
+              name: formData.name,
+              email: formData.email,
+              contact: formData.phone
+            },
+            theme: { color: "#00F0FF" },
+            modal: {
+              ondismiss: function() {
+                // User closed modal without paying. Registration is still valid though!
+                setSuccess(true);
+                setLoading(false);
+              }
+            }
+          };
+          const rzp = new window.Razorpay(options);
+          rzp.open();
+          return; // Pause execution while modal is open
+        }
+      } catch (payErr) {
+        console.error("Razorpay UI Error:", payErr);
+        // Continue to success screen even if payment UI fails to load
+      }
+
       setSuccess(true)
     } catch (err) {
       console.error(err)

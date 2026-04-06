@@ -2,6 +2,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import MagneticCursor from "./components/MagneticCursor";
 import ParticleBackground from "./components/ParticleBackground";
+import Script from "next/script";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,6 +28,8 @@ export default function RootLayout({ children }) {
         <MagneticCursor />
         <ParticleBackground />
         
+        <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
+
         <div className="relative z-10">
           {children}
         </div>

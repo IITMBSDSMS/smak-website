@@ -121,13 +121,17 @@ export const getLMSInternalNotificationEmail = (name, course, email) => `
 export const getInvoiceEmail = (name, invoiceId) => `
 <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: 0 auto;">
   <div style="background-color: #0b0e14; padding: 20px; text-align: center;">
-    <h1 style="color: #ff4e4e; margin: 0; font-size: 24px; text-transform: uppercase;">Payment Received</h1>
+    <h1 style="color: #00f0ff; margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 2px;">Enrollment Confirmed</h1>
   </div>
   <div style="padding: 20px; border: 1px solid #eaeaea;">
     <p>Dear <strong>${name}</strong>,</p>
-    <p>Thank you for your payment. Your enrollment is now confirmed.</p>
-    <p>Your Invoice ID is: <strong>${invoiceId}</strong></p>
-    <p>You can download the full PDF invoice from your dashboard.</p>
+    <p>We are thrilled to officially welcome you aboard. Your payment was successful and your enrollment is confirmed.</p>
+    <p>Your Payment Reference / Invoice ID is: <strong>${invoiceId}</strong></p>
+    <p>You can track your progress and access documentation immediately via the Student Portal.</p>
+    <hr style="border-top: 1px solid #eaeaea; margin: 20px 0;" />
+    <p style="font-size: 12px; color: #777;">
+      <strong>The SMAK Core Team</strong>
+    </p>
   </div>
 </div>
 `;
@@ -135,17 +139,36 @@ export const getInvoiceEmail = (name, invoiceId) => `
 export const getKitAndSOPEmail = (name) => `
 <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: 0 auto;">
   <div style="background-color: #0b0e14; padding: 20px; text-align: center;">
-    <h1 style="color: #ff4e4e; margin: 0; font-size: 24px; text-transform: uppercase;">Your Onboarding Kit</h1>
+    <h1 style="color: #00f0ff; margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 2px;">Your Welcome Kit</h1>
   </div>
   <div style="padding: 20px; border: 1px solid #eaeaea;">
     <p>Dear <strong>${name}</strong>,</p>
-    <p>Welcome aboard! Here are your essential resources:</p>
-    <ul>
-      <li><a href="#">Welcome Kit (PDF)</a></li>
-      <li><a href="#">Standard Operating Procedures (SOP)</a></li>
-      <li><a href="#">Join the WhatsApp Community</a></li>
-      <li><a href="#">Access LMS Dashboard</a></li>
+    <p>Your learning journey begins now. Please find your essential onboarding resources below:</p>
+    <ul style="line-height: 2;">
+      <li><a href="#" style="color:#00f0ff; background:#0b0e14; padding:2px 8px; border-radius:4px; text-decoration:none;">Download Welcome Kit (PDF)</a></li>
+      <li><a href="#" style="color:#00f0ff; background:#0b0e14; padding:2px 8px; border-radius:4px; text-decoration:none;">Review Operating Procedures (SOP)</a></li>
+      <li><a href="https://chat.whatsapp.com/dummy" style="font-weight:bold; color:green;">Join the WhatsApp Community Group</a></li>
     </ul>
+  </div>
+</div>
+`;
+
+export const getEligibilityEmail = (name, type) => `
+<div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: 0 auto;">
+  <div style="background-color: #0b0e14; padding: 20px; text-align: center;">
+    <h1 style="color: #00f0ff; margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 2px;">Document Unlocked</h1>
+  </div>
+  <div style="padding: 20px; border: 1px solid #eaeaea;">
+    <p>Dear <strong>${name}</strong>,</p>
+    <p>Congratulations! Based on your recent performance, you have crossed the required threshold.</p>
+    <p>Your <strong>${type}</strong> is now officially available for download.</p>
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="https://smakresearch.com/dashboard" style="background-color: #00f0ff; color: #0b0e14; padding: 12px 24px; text-decoration: none; font-weight: bold; border-radius: 4px; display: inline-block;">Access Student Portal</a>
+    </div>
+    <hr style="border-top: 1px solid #eaeaea; margin: 20px 0;" />
+    <p style="font-size: 12px; color: #777;">
+      <strong>The SMAK Core Team</strong>
+    </p>
   </div>
 </div>
 `;

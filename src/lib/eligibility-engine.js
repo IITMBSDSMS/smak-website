@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { sendEligibilityEmail } from './email-automation';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -22,7 +23,7 @@ export async function runEligibilityCheck(entryNo) {
     // 1. Fetch the member's current data
     const { data: member, error } = await supabase
       .from('members')
-      .select('id, attendance, quiz_avg, cert_status, lor_status')
+      .select('id, name, email, attendance, quiz_avg, cert_status, lor_status')
       .eq('entry_no', entryNo)
       .single();
 
@@ -60,6 +61,14 @@ export async function runEligibilityCheck(entryNo) {
 
       if (updateError) throw updateError;
       updated = true;
+
+      // 5. Fire auto-emails for newly unlocked documents
+      if (updates.cert_status === 'eligible') {
+        await sendEligibilityEmail({ to: member.email, name: member.name, type: 'Course Certificate' });
+      }
+      if (updates.lor_status === 'eligible') {
+        await sendEligibilityEmail({ to: member.email, name: member.name, type: 'Letter of Recommendation (LOR)' });
+      }
     }
 
     return {
