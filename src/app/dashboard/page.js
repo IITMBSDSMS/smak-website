@@ -220,6 +220,12 @@ export default function Dashboard() {
     );
   }
 
+  if (!userData) return (
+     <div className="min-h-screen bg-[#050B14] flex items-center justify-center font-sans">
+       <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+     </div>
+  );
+
   const stats = {
     name: userData.name || "Member",
     course: userData.course || "Medical Research Accelerator",
