@@ -32,17 +32,22 @@ export async function POST(req) {
 
       if (email) {
         // Resolve user id from email
-        const { data: user } = await supabase.from('users_mentee').select('id').eq('email', email).single();
-        if (user) {
-          // Log Attendance
-          await supabase.from('attendance').insert([{
-            user_id: user.id,
-            session_id: meetingId.toString(),
-            duration_attended: duration,
-            zoom_status: 'left'
-          }]);
+        const { data: member } = await supabase.from('members').select('id, entry_no, attendance').eq('email', email).single();
+        if (member) {
           
-          // Note: In real app, we might trigger Eliigibility engine calculation here if duration > threshold
+          if (duration > 30) {
+            // Logic: Increment attendance by 10% per valid session (max 100%)
+            const newAttendance = Math.min((parseFloat(member.attendance) || 0) + 10, 100);
+
+            await supabase.from('members').update({
+              attendance: newAttendance
+            }).eq('id', member.id);
+
+            // Auto-Trigger Eligibility Engine
+            const { runEligibilityCheck } = await import('@/lib/eligibility-engine');
+            await runEligibilityCheck(member.entry_no);
+            console.log(`Zoom attendance updated & engines fired for ${member.entry_no}`);
+          }
         }
       }
     }

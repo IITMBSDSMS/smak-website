@@ -1,38 +1,52 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
-// import { sendInvoiceEmail } from '@/lib/email-automation';
+import { createClient } from '@/lib/supabase';
+import crypto from 'crypto';
+
+// Use service role if available for backend webhooks
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
 
 export async function POST(req) {
   try {
     const rawBody = await req.text();
-    const signature = req.headers.get('x-razorpay-signature'); // or Stripe equivalent
-    
-    // 1. Verify Webhook Signature (skipping logic for stub)
-    // const crypto = require('crypto');
-    // const expectedSignature = crypto.createHmac('sha256', process.env.RAZORPAY_WEBHOOK_SECRET).update(rawBody).digest('hex');
-    // if (expectedSignature !== signature) throw new Error('Invalid signature');
+    const signature = req.headers.get('x-razorpay-signature');
 
-    const body = JSON.parse(rawBody);
-    const { event, payload } = body;
+    // 1. Verify Webhook Signature
+    const expectedSignature = crypto
+      .createHmac('sha256', process.env.RAZORPAY_WEBHOOK_SECRET || 'fallback_secret')
+      .update(rawBody)
+      .digest('hex');
+
+    // Remove this skip in production!
+    if (expectedSignature !== signature && process.env.NODE_ENV === 'production') {
+       throw new Error('Invalid signature');
+    }
+
+    const { event, payload } = JSON.parse(rawBody);
 
     if (event === 'payment.captured' || event === 'payment.authorized') {
       const paymentEntity = payload.payment.entity;
-      const orderId = paymentEntity.order_id;
-      // Extract userId and courseId if passed through notes, or lookup enrollment by order_id
-      const { user_id, course_id } = paymentEntity.notes || {};
+      
+      // Extract entry_no securely passed during order creation
+      const { entry_no } = paymentEntity.notes || {};
 
-      if (user_id && course_id) {
-        // 2. Update Enrollment Status
+      if (entry_no) {
+        // 2. Update Member Status
         const { error: dbError } = await supabase
-          .from('enrollments')
-          .update({ payment_status: 'success', invoice_id: `INV-${Date.now()}` })
-          .eq('user_id', user_id)
-          .eq('course_id', course_id);
+          .from('members')
+          .update({ 
+            payment_status: 'SUCCESS',
+            status: 'Active' // Move them from pending to active
+            // Additionally generating an invoice would go here
+          })
+          .eq('entry_no', entry_no);
 
         if (dbError) throw dbError;
 
-        // 3. Generate Invoice (stub) & Send Email
-        // await sendInvoiceEmail({ userId: user_id, invoiceId: `INV-${Date.now()}` });
+        // 3. Send Success / Kit Email (Logic to be built in email-automation.js)
+        console.log(`Payment confirmed for ${entry_no}`);
       }
     }
 
@@ -42,3 +56,4 @@ export async function POST(req) {
     return NextResponse.json({ error: 'Webhook processing failed' }, { status: 400 });
   }
 }
+

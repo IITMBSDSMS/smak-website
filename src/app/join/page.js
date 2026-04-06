@@ -23,12 +23,20 @@ export default function Join() {
     linkedin_url: ""
   })
   
+  const [photo, setPhoto] = useState(null)
+  
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [errorMsg, setErrorMsg] = useState("")
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
+  }
+
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setPhoto(e.target.files[0])
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -39,6 +47,27 @@ export default function Join() {
     try {
       // 1. Generate a temporary Entry No for the email
       const generatedEntryNo = `SMAK-M-${Math.floor(1000 + Math.random() * 9000)}`
+
+      let photoUrl = null;
+      if (photo) {
+        const fileExt = photo.name.split('.').pop();
+        const fileName = `${generatedEntryNo}-${Date.now()}.${fileExt}`;
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('profile_photos')
+          .upload(fileName, photo, { upsert: true });
+
+        if (uploadError) {
+          console.error("Photo upload failed:", uploadError);
+          // Don't throw, let them register even if photo fails temporarily
+        } else if (uploadData) {
+          const { data: publicUrlData } = supabase.storage
+            .from('profile_photos')
+            .getPublicUrl(uploadData.path);
+            
+          photoUrl = publicUrlData.publicUrl;
+        }
+      }
 
       // 2. Insert into Supabase 'members'
       const { error: dbError } = await supabase
@@ -53,6 +82,7 @@ export default function Join() {
             year: formData.year || "1st Year",
             course: formData.course || null,
             linkedin_url: formData.linkedin_url || null,
+            photo_url: photoUrl,
             entry_no: generatedEntryNo,
             status: 'Active',
             enrollment_date: new Date().toISOString(),
@@ -194,9 +224,15 @@ export default function Join() {
                     <textarea name="interest" value={formData.interest} onChange={handleChange} required rows="3" placeholder="Brief statement of purpose..." className="w-full bg-black-void/50 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-bio transition-colors resize-none"></textarea>
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-xs text-blue-neural font-mono uppercase tracking-widest">LinkedIn Profile <span className="text-gray-600 normal-case">(optional)</span></label>
-                    <input type="url" name="linkedin_url" value={formData.linkedin_url} onChange={handleChange} placeholder="https://linkedin.com/in/yourname" className="w-full bg-black-void/50 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-bio transition-colors" />
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-xs text-blue-neural font-mono uppercase tracking-widest">LinkedIn Profile <span className="text-gray-600 normal-case">(optional)</span></label>
+                      <input type="url" name="linkedin_url" value={formData.linkedin_url} onChange={handleChange} placeholder="https://linkedin.com/in/yourname" className="w-full bg-black-void/50 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-bio transition-colors" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs text-blue-neural font-mono uppercase tracking-widest">Profile Photo <span className="text-gray-600 normal-case">(optional)</span></label>
+                      <input type="file" accept="image/*" onChange={handleFileChange} className="w-full bg-black-void/50 border border-gray-800 rounded-lg px-4 py-2.5 text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:uppercase file:tracking-widest file:bg-cyan-bio/10 file:text-cyan-bio hover:file:bg-cyan-bio/20 transition-all focus:outline-none focus:border-cyan-bio" />
+                    </div>
                   </div>
 
                   <button type="submit" disabled={loading} className="w-full py-4 bg-cyan-bio text-black-void font-bold text-sm tracking-widest uppercase rounded-lg hover:shadow-[0_0_20px_rgba(0,240,255,0.6)] hover:bg-white transition-all interactive disabled:opacity-50 flex items-center justify-center gap-2">
