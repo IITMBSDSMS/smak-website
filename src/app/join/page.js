@@ -16,7 +16,8 @@ export default function Join() {
     name: "",
     email: "",
     college: "",
-    interest: ""
+    interest: "",
+    phone: ""
   })
   
   const [loading, setLoading] = useState(false)
@@ -37,7 +38,6 @@ export default function Join() {
       const generatedEntryNo = `SMAK-M-${Math.floor(1000 + Math.random() * 9000)}`
 
       // 2. Insert into Supabase 'members'
-      // Only insert fields that exist in the test schema
       const { error: dbError } = await supabase
         .from('members')
         .insert([
@@ -46,15 +46,18 @@ export default function Join() {
             email: formData.email, 
             college: formData.college,
             interest: formData.interest,
-            phone: "0000000000", // Fallback for required fields based on old schema
+            phone: formData.phone,
             year: "1st Year",
             entry_no: generatedEntryNo
           }
         ])
 
-      // Ignore unique constraint error if they apply multiple times for now, just send the email anyway
-      if (dbError && dbError.code !== '23505') {
-        console.error("Supabase Error:", dbError)
+      if (dbError) {
+        if (dbError.code === '23505') {
+           throw new Error("These credentials (Email or Phone) are already registered in the system.");
+        } else {
+           throw new Error("Secure database link failed. " + dbError.message);
+        }
       }
 
       // 3. Send the registration email 
@@ -140,9 +143,15 @@ export default function Join() {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-xs text-blue-neural font-mono uppercase tracking-widest">Institution / Base</label>
-                    <input type="text" name="college" value={formData.college} onChange={handleChange} required placeholder="Medical College / Research Center" className="w-full bg-black-void/50 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-bio transition-colors" />
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-xs text-blue-neural font-mono uppercase tracking-widest">Institution / Base</label>
+                      <input type="text" name="college" value={formData.college} onChange={handleChange} required placeholder="Medical College / Research Center" className="w-full bg-black-void/50 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-bio transition-colors" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs text-blue-neural font-mono uppercase tracking-widest">Direct Line (Phone)</label>
+                      <input type="tel" name="phone" value={formData.phone} onChange={handleChange} required placeholder="Phone Number" className="w-full bg-black-void/50 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-cyan-bio transition-colors" />
+                    </div>
                   </div>
 
                   <div className="space-y-2">
