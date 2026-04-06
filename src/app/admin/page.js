@@ -22,6 +22,10 @@ export default function Admin() {
 
   const [boardMembers, setBoardMembers] = useState([])
 
+  // LMS Modal State
+  const [lmsModalOpen, setLmsModalOpen] = useState(false)
+  const [editingMem, setEditingMem] = useState(null)
+  
   const [boardForm, setBoardForm] = useState({
     name: "",
     role: "",
@@ -434,6 +438,29 @@ export default function Admin() {
     }
   }
 
+  async function updateLmsData(e) {
+    e.preventDefault()
+    if(!editingMem) return;
+
+    const { error } = await supabase
+      .from("members")
+      .update({
+        course: editingMem.course,
+        attendance: editingMem.attendance,
+        quiz_avg: editingMem.quiz_avg,
+        cert_status: editingMem.cert_status,
+        lor_status: editingMem.lor_status
+      })
+      .eq("id", editingMem.id)
+
+    if(error) {
+      alert("Failed to update LMS data: " + error.message)
+    } else {
+      setLmsModalOpen(false)
+      fetchMembers() // Refresh exactly the updated rows
+    }
+  }
+
   function exportCSV() {
     const headers = ["Name","Email","Phone","College","Year","Interest"]
 
@@ -618,10 +645,19 @@ export default function Admin() {
                               </a>
                               <a
                                 href={`/generate-id?entry=${m.entry_no}&name=${encodeURIComponent(m.name || "")}&phone=${encodeURIComponent(m.phone || "")}`}
-                                className="bg-green-500 text-white px-3 py-1 rounded"
+                                className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded transition"
                               >
                                 ID Card
                               </a>
+                              <button
+                                onClick={() => {
+                                  setEditingMem(m)
+                                  setLmsModalOpen(true)
+                                }}
+                                className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded transition font-bold"
+                              >
+                                Edit LMS
+                              </button>
                             </>
                           ) : (
                             <span className="text-yellow-400 text-xs">No Entry ID</span>
@@ -644,6 +680,62 @@ export default function Admin() {
 
           </div>
 
+        )}
+
+        {/* --- LMS OVERRIDE MODAL --- */}
+        {lmsModalOpen && editingMem && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-[#0b0e14] border border-blue-900/50 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden shadow-blue-500/10">
+              <div className="px-6 py-4 border-b border-white/5 flex justify-between items-center bg-[#050A10]">
+                <h3 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300">LMS Data Override</h3>
+                <button onClick={() => setLmsModalOpen(false)} className="text-gray-400 hover:text-white">&times;</button>
+              </div>
+              <form onSubmit={updateLmsData} className="p-6 space-y-4">
+                <div className="text-sm text-gray-400 uppercase tracking-widest mb-4">Editing Database for: <span className="text-white font-bold">{editingMem.name}</span></div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs text-gray-400 mb-1 block">Course</label>
+                    <input value={editingMem.course || ''} onChange={e=>setEditingMem({...editingMem, course: e.target.value})} className="w-full bg-black border border-gray-800 rounded px-3 py-2" placeholder="Course Name" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-400 mb-1 block">Attendance (%)</label>
+                    <input type="number" max="100" min="0" value={editingMem.attendance || 0} onChange={e=>setEditingMem({...editingMem, attendance: parseInt(e.target.value) || 0})} className="w-full bg-black border border-gray-800 rounded px-3 py-2" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs text-gray-400 mb-1 block">Quiz Avg (%)</label>
+                    <input type="number" max="100" min="0" value={editingMem.quiz_avg || 0} onChange={e=>setEditingMem({...editingMem, quiz_avg: parseInt(e.target.value) || 0})} className="w-full bg-black border border-gray-800 rounded px-3 py-2" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-400 mb-1 block">Cert Status</label>
+                    <select value={editingMem.cert_status || 'pending'} onChange={e=>setEditingMem({...editingMem, cert_status: e.target.value})} className="w-full bg-black border border-gray-800 rounded px-3 py-2.5">
+                      <option value="pending">Pending</option>
+                      <option value="eligible">Eligible</option>
+                      <option value="generated">Generated</option>
+                      <option value="rejected">Rejected</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs text-gray-400 mb-1 block">LOR Status</label>
+                  <select value={editingMem.lor_status || 'pending'} onChange={e=>setEditingMem({...editingMem, lor_status: e.target.value})} className="w-full bg-black border border-gray-800 rounded px-3 py-2.5">
+                    <option value="pending">Pending</option>
+                    <option value="eligible">Eligible</option>
+                    <option value="generated">Generated</option>
+                  </select>
+                </div>
+
+                <div className="pt-4 flex justify-end gap-3 border-t border-white/5 mt-6">
+                  <button type="button" onClick={() => setLmsModalOpen(false)} className="px-4 py-2 rounded text-gray-400 hover:text-white">Cancel</button>
+                  <button type="submit" className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded text-white font-bold">Save Changes</button>
+                </div>
+              </form>
+            </div>
+          </div>
         )}
 
         {/* LEADERS TAB */}
