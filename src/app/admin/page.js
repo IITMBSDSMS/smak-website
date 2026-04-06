@@ -742,11 +742,25 @@ export default function Admin() {
 
                 <div>
                   <label className="text-xs text-gray-400 mb-1 block">LOR Status</label>
-                  <select value={editingMem.lor_status || 'pending'} onChange={e=>setEditingMem({...editingMem, lor_status: e.target.value})} className="w-full bg-black border border-gray-800 rounded px-3 py-2.5">
+                  <select value={editingMem.lor_status || 'pending'} onChange={e=>setEditingMem({...editingMem, lor_status: e.target.value})} className="w-full bg-black border border-gray-800 rounded px-3 py-2.5 text-white">
                     <option value="pending">Pending</option>
                     <option value="eligible">Eligible</option>
                     <option value="generated">Generated</option>
                   </select>
+                </div>
+
+                <div className="pt-4 border-t border-white/5 space-y-4">
+                   <div className="text-xs text-blue-400 font-bold uppercase tracking-widest">Signatory Configuration</div>
+                   <div className="grid grid-cols-2 gap-4">
+                     <div>
+                       <label className="text-xs text-gray-400 mb-1 block">Director Name</label>
+                       <input type="text" value={editingMem.director_name || ''} onChange={e=>setEditingMem({...editingMem, director_name: e.target.value})} placeholder="e.g. Dr. Sarah Jenkins" className="w-full bg-black border border-gray-800 rounded px-3 py-2 text-white" />
+                     </div>
+                     <div>
+                       <label className="text-xs text-gray-400 mb-1 block">Director Signature (Text)</label>
+                       <input type="text" value={editingMem.director_sign || ''} onChange={e=>setEditingMem({...editingMem, director_sign: e.target.value})} placeholder="Leave blank to use Name" className="w-full bg-black border border-gray-800 rounded px-3 py-2 text-white" />
+                     </div>
+                   </div>
                 </div>
 
                 <div className="pt-4 flex justify-end gap-3 border-t border-white/5 mt-6">

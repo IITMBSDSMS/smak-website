@@ -21,8 +21,10 @@ export default function Dashboard() {
   const [userData, setUserData] = useState(null);
   
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isGeneratingLor, setIsGeneratingLor] = useState(false);
   const [qrCodeURI, setQrCodeURI] = useState("");
   const certRef = useRef(null);
+  const lorRef = useRef(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -115,8 +117,44 @@ export default function Dashboard() {
     }
   };
 
+  const generateLOR = async () => {
+    if (!userData || !lorRef.current) return;
+    setIsGeneratingLor(true);
+
+    try {
+      const canvas = await html2canvas(lorRef.current, {
+        scale: 3, 
+        backgroundColor: "#FFFFFF",
+        logging: false
+      });
+      const imgData = canvas.toDataURL("image/png");
+
+      const pdf = new jsPDF({
+        orientation: "portrait", 
+        unit: "mm",
+        format: "a4" 
+      });
+      
+      pdf.addImage(imgData, "PNG", 0, 0, 210, 297);
+      pdf.save(`SMAK-LOR-${userData.entry_no}.pdf`);
+      
+      setUserData(prev => ({...prev, lor_status: 'generated'}));
+      alert("Letter of Recommendation generated and downloaded successfully!");
+
+    } catch (err) {
+      console.error(err);
+      alert("Error generating the high-resolution LOR. Please try again.");
+    } finally {
+      setIsGeneratingLor(false);
+    }
+  };
+
   const requestLOR = () => {
-    alert(`Success! Email sent to Admin to process the Letter of Recommendation for ${userData.entry_no}. Our team will reach out directly.`);
+    if (userData.lor_status === 'eligible') {
+       generateLOR();
+    } else {
+       alert(`Success! Email sent to Admin to manually review LOR eligibility for ${userData.entry_no}. Our team will reach out directly.`);
+    }
   };
 
   const accessModules = () => {
@@ -230,9 +268,16 @@ export default function Dashboard() {
                  
                  {/* Left Signature */}
                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingBottom: "10px" }}>
-                   <div style={{ width: "240px", height: "1px", backgroundColor: "#94A3B8", marginBottom: "12px" }}></div>
-                   <span style={{ color: "#0F172A", fontWeight: "bold", fontSize: "18px", textTransform: "uppercase", letterSpacing: "1px", margin: 0 }}>Program Director</span>
-                   <span style={{ color: "#64748B", fontSize: "16px", marginTop: "4px", fontStyle: "italic" }}>SMAK Research</span>
+                   {userData.director_sign ? (
+                     userData.director_sign.startsWith('http') || userData.director_sign.startsWith('/') ? (
+                       <img src={userData.director_sign} alt="Signature" style={{ height: "40px", objectFit: "contain", marginBottom: "10px" }} />
+                     ) : (
+                       <span style={{ fontFamily: "'Brush Script MT', cursive, sans-serif", fontSize: "36px", color: "#0F172A", marginBottom: "5px", lineHeight: "1" }}>{userData.director_sign}</span>
+                     )
+                   ) : <div style={{ height: "45px" }}></div>}
+                   <div style={{ width: "240px", height: "1px", backgroundColor: "#94A3B8", marginBottom: "8px" }}></div>
+                   <span style={{ color: "#0F172A", fontWeight: "bold", fontSize: "16px", textTransform: "uppercase", letterSpacing: "1px", margin: 0 }}>{userData.director_name || "Program Director"}</span>
+                   <span style={{ color: "#64748B", fontSize: "14px", marginTop: "4px", fontStyle: "italic" }}>SMAK Research</span>
                  </div>
                  
                  {/* Center QR Verification Code */}
@@ -249,9 +294,10 @@ export default function Dashboard() {
 
                  {/* Right Date */}
                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingBottom: "10px" }}>
-                   <div style={{ width: "240px", height: "1px", backgroundColor: "#94A3B8", marginBottom: "12px" }}></div>
-                   <span style={{ color: "#0F172A", fontWeight: "bold", fontSize: "18px", textTransform: "uppercase", letterSpacing: "1px", margin: 0 }}>Date Issued</span>
-                   <span style={{ color: "#64748B", fontSize: "16px", marginTop: "4px" }}>{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+                   <div style={{ height: "45px" }}></div>
+                   <div style={{ width: "240px", height: "1px", backgroundColor: "#94A3B8", marginBottom: "8px" }}></div>
+                   <span style={{ color: "#0F172A", fontWeight: "bold", fontSize: "16px", textTransform: "uppercase", letterSpacing: "1px", margin: 0 }}>Date Issued</span>
+                   <span style={{ color: "#64748B", fontSize: "14px", marginTop: "4px" }}>{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
                  </div>
 
                </div>
@@ -259,6 +305,79 @@ export default function Dashboard() {
              </div>
            </div>
         </div>
+
+      {/* HIDDEN LOR TEMPLATE (A4 Portrait) */}
+      <div className="fixed overflow-hidden pointer-events-none -z-50 opacity-0" style={{ top: '-9999px', left: '-9999px' }}>
+        <div ref={lorRef} style={{ width: "794px", height: "1123px", backgroundColor: "#FFFFFF", padding: "50px", boxSizing: "border-box", fontFamily: "'Times New Roman', Times, serif" }}>
+           
+           {/* LOR Header */}
+           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "2px solid #0A1930", paddingBottom: "20px", marginBottom: "40px" }}>
+              <div style={{ width: "100px", height: "100px" }}>
+                 <img src="/logo.png" style={{ width: "100%", height: "100%", objectFit: "contain" }} alt="SMAK Logo" />
+              </div>
+              <div style={{ textAlign: "right" }}>
+                 <h2 style={{ color: "#0A1930", fontSize: "24px", margin: "0 0 5px 0", textTransform: "uppercase", letterSpacing: "2px" }}>Society for Medical</h2>
+                 <h2 style={{ color: "#0A1930", fontSize: "24px", margin: "0 0 15px 0", textTransform: "uppercase", letterSpacing: "2px" }}>Academia & Knowledge</h2>
+                 <p style={{ color: "#475569", fontSize: "14px", margin: "0", fontFamily: "sans-serif" }}>official@smakresearch.com</p>
+                 <p style={{ color: "#475569", fontSize: "14px", margin: "0", fontFamily: "sans-serif" }}>www.smakresearch.com</p>
+              </div>
+           </div>
+
+           {/* LOR Meta */}
+           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "40px", fontFamily: "sans-serif", fontSize: "14px", color: "#334155" }}>
+              <div><strong>Date:</strong> {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
+              <div><strong>Reference ID:</strong> {userData.entry_no}</div>
+           </div>
+
+           {/* LOR Title */}
+           <h1 style={{ textAlign: "center", fontSize: "28px", color: "#0F172A", letterSpacing: "1px", borderBottom: "1px solid #CBD5E1", display: "inline-block", margin: "0 auto 40px auto", paddingBottom: "10px", width: "100%" }}>LETTER OF RECOMMENDATION</h1>
+
+           {/* LOR Body */}
+           <div style={{ fontSize: "16px", lineHeight: "1.8", color: "#1E293B", textAlign: "justify" }}>
+              <p style={{ marginBottom: "20px" }}>To Whom It May Concern,</p>
+              
+              <p style={{ marginBottom: "20px" }}>
+                It is with great pleasure and strong endorsement that I write this letter of recommendation for <strong style={{ fontSize: "18px" }}>{stats.name}</strong>, who has demonstrated exemplary performance in the <strong>{stats.course}</strong> program hosted by the Society for Medical Academia & Knowledge.
+              </p>
+              
+              <p style={{ marginBottom: "20px" }}>
+                Over the course of the rigorous training, {stats.name.split(' ')[0]} maintained an impressive attendance record of <strong>{stats.attendance}%</strong> and achieved a comprehensive quiz proficiency rating of <strong>{stats.quizAvg}%</strong>. These metrics reflect a level of dedication, analytical aptitude, and intellectual curiosity that places them in the highest percentiles of our cohort.
+              </p>
+
+              <p style={{ marginBottom: "20px" }}>
+                The curriculum demands exceptional critical thinking, clinical research methodology comprehension, and proactive collaboration. {stats.name.split(' ')[0]} consistently navigated complex medical paradigms with professionalism and a clear commitment to academic excellence. Their ability to synthesize rigorous scientific data and apply it constructively makes them a highly valuable asset to any future clinical or academic endeavor.
+              </p>
+
+              <p style={{ marginBottom: "50px" }}>
+                I unreservedly recommend {stats.name} for competitive academic placements, advanced research opportunities, or professional capacities. Should you require any further validation of their credentials, please contact our administrative board.
+              </p>
+           </div>
+
+           {/* LOR Sign Off */}
+           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+              <div>
+                 <p style={{ marginBottom: "10px", fontSize: "16px", color: "#1E293B" }}>Sincerely,</p>
+                 {userData.director_sign ? (
+                   userData.director_sign.startsWith('http') || userData.director_sign.startsWith('/') ? (
+                     <img src={userData.director_sign} alt="Signature" style={{ height: "60px", objectFit: "contain", marginBottom: "10px" }} />
+                   ) : (
+                     <div style={{ fontFamily: "'Brush Script MT', cursive, sans-serif", fontSize: "40px", color: "#0A1930", marginBottom: "10px", lineHeight: "1" }}>{userData.director_sign}</div>
+                   )
+                 ) : <div style={{ height: "60px" }}></div>}
+                 <strong style={{ display: "block", fontSize: "18px", color: "#0F172A", margin: "0 0 5px 0" }}>{userData.director_name || "Program Director"}</strong>
+                 <p style={{ margin: "0", color: "#475569", fontSize: "14px", fontFamily: "sans-serif" }}>Program Director, {stats.course}</p>
+                 <p style={{ margin: "0", color: "#475569", fontSize: "14px", fontFamily: "sans-serif" }}>Society for Medical Academia & Knowledge</p>
+              </div>
+
+              {qrCodeURI && (
+                <div style={{ width: "90px", height: "90px", padding: "4px", border: "1px solid #CBD5E1", borderRadius: "8px" }}>
+                  <img src={qrCodeURI} alt="Verification QR" style={{ width: "100%", height: "100%" }} />
+                </div>
+              )}
+           </div>
+
+        </div>
+      </div>
       </div>
 
       <div className="max-w-6xl mx-auto mt-28 relative z-10">
