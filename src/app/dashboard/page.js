@@ -164,55 +164,68 @@ export default function Dashboard() {
 
       {/* HIDDEN CERTIFICATE TEMPLATE */}
       <div className="fixed overflow-hidden pointer-events-none -z-50 opacity-0" style={{ top: '-9999px', left: '-9999px' }}>
-        <div ref={certRef} className="relative flex flex-col items-center justify-center font-sans tracking-wide" style={{ width: "1123px", height: "794px", backgroundColor: "#FFFFFF" }}>
-           <div className="absolute inset-0 m-[30px] border-[12px] border-[#0A1930] flex flex-col justify-center items-center">
-             <div className="absolute inset-0 m-[4px] border-[2px] border-[#CBD5E1]"></div>
-             
-             {/* Header */}
-             <div className="mb-8 flex flex-col items-center">
-               <div className="w-[100px] h-[100px] bg-[#0A1930] rounded-full p-[15px] mb-6 flex items-center justify-center">
-                 <img src="/logo.png" className="w-full h-full object-contain" alt="SMAK Logo" />
-               </div>
-               <h3 className="text-[#0A1930] text-[20px] tracking-[0.3em] font-semibold uppercase mb-2">Society for Medical Academia & Knowledge</h3>
-             </div>
-
-             <h1 className="text-[#1E3A8A] text-[64px] font-black uppercase tracking-widest mb-10 text-center -mt-2">
-               Certificate of <br/> Excellence
-             </h1>
-
-             <p className="text-[#64748B] text-[22px] tracking-widest font-medium uppercase mb-8">This is to proudly certify that</p>
-             
-             <h2 className="text-[#0F172A] text-[54px] font-bold border-b-2 border-[#1E3A8A] px-16 pb-2 mb-8 leading-none" style={{ fontFamily: "Georgia, serif" }}>
-               {stats.name}
-             </h2>
-
-             <p className="text-[#334155] text-[18px] max-w-[700px] text-center leading-relaxed mb-16">
-               has successfully completed the grueling academic requirements, rigorous training, and comprehensive examinations of the <strong className="text-[#1E3A8A]">{stats.course}</strong> program with exceptional performance.
-             </p>
-
-             {/* Footer Signatures */}
-             <div className="absolute bottom-[60px] w-full px-[120px] flex justify-between items-end">
-               <div className="flex flex-col items-center">
-                 <div className="w-[200px] h-px bg-[#94A3B8] mb-4"></div>
-                 <span className="text-[#0F172A] font-bold text-[18px] uppercase tracking-wide">Program Director</span>
-                 <span className="text-[#64748B] text-[14px] mt-1">SMAK Research</span>
-               </div>
+        <div ref={certRef} style={{ width: "1123px", height: "794px", backgroundColor: "#FFFFFF", padding: "30px", boxSizing: "border-box", fontFamily: 'ui-sans-serif, system-ui, sans-serif' }}>
+           <div style={{ width: "100%", height: "100%", border: "12px solid #0A1930", padding: "4px", boxSizing: "border-box" }}>
+             <div style={{ width: "100%", height: "100%", border: "2px solid #CBD5E1", display: "flex", flexDirection: "column", alignItems: "center", position: "relative", paddingTop: "50px", paddingBottom: "50px", boxSizing: "border-box" }}>
                
-               <div className="flex flex-col items-center">
-                 <div className="w-[80px] h-[80px] border-[3px] border-[#0A1930] rounded-full flex items-center justify-center mb-6">
-                   <span className="text-[#0A1930] font-black text-[10px] text-center uppercase leading-tight tracking-widest">Official<br/>Seal</span>
+               {/* Registration ID Top Right */}
+               <div style={{ position: "absolute", top: "25px", right: "35px", color: "#64748B", fontSize: "12px", fontFamily: "monospace", letterSpacing: "2px" }}>
+                 ID: {userData.entry_no}
+               </div>
+
+               {/* Header & Logo */}
+               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "30px" }}>
+                 <div style={{ width: "90px", height: "90px", backgroundColor: "#0A1930", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "20px" }}>
+                   <img src="/logo.png" style={{ width: "60px", height: "60px", objectFit: "contain" }} alt="SMAK Logo" />
                  </div>
+                 <h3 style={{ color: "#0A1930", fontSize: "18px", letterSpacing: "0.3em", fontWeight: "600", textTransform: "uppercase", margin: 0 }}>Society for Medical Academia & Knowledge</h3>
                </div>
 
-               <div className="flex flex-col items-center">
-                 <div className="w-[200px] h-px bg-[#94A3B8] mb-4"></div>
-                 <span className="text-[#0F172A] font-bold text-[18px] uppercase tracking-wide">Date Issued</span>
-                 <span className="text-[#64748B] text-[14px] mt-1">{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
-               </div>
-             </div>
+               {/* Title */}
+               <h1 style={{ color: "#1E3A8A", fontSize: "60px", fontWeight: "900", textTransform: "uppercase", letterSpacing: "4px", margin: "0 0 25px 0", textAlign: "center", lineHeight: "1.15" }}>
+                 Certificate of <br/> Excellence
+               </h1>
 
-             <div className="absolute top-[40px] right-[40px] text-[#64748B] text-[12px] font-mono tracking-widest">
-               ID: {userData.entry_no}
+               {/* Certify Text */}
+               <p style={{ color: "#64748B", fontSize: "20px", letterSpacing: "3px", fontWeight: "500", textTransform: "uppercase", margin: "0 0 25px 0" }}>This is to proudly certify that</p>
+               
+               {/* Name Block */}
+               <h2 style={{ color: "#0F172A", fontSize: "52px", fontWeight: "bold", fontFamily: "Georgia, serif", margin: "0 0 10px 0", textAlign: "center", textTransform: "capitalize" }}>
+                 {stats.name}
+               </h2>
+               <div style={{ width: "450px", height: "2px", backgroundColor: "#1E3A8A", margin: "0 auto 30px auto" }}></div>
+
+               {/* Paragraph Block */}
+               <p style={{ color: "#334155", fontSize: "18px", maxWidth: "700px", textAlign: "center", lineHeight: "1.6", margin: "0 0 0 0" }}>
+                 has successfully completed the grueling academic requirements, rigorous training, and comprehensive examinations of the <strong style={{ color: "#1E3A8A" }}>{stats.course}</strong> program with exceptional performance.
+               </p>
+
+               {/* Footer Signatures (Pushed to bottom naturally via mt-auto) */}
+               <div style={{ width: "100%", padding: "0 100px", display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: "auto", boxSizing: "border-box" }}>
+                 
+                 {/* Left Signature */}
+                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                   <div style={{ width: "220px", height: "1px", backgroundColor: "#94A3B8", marginBottom: "12px" }}></div>
+                   <span style={{ color: "#0F172A", fontWeight: "bold", fontSize: "16px", textTransform: "uppercase", letterSpacing: "1px", margin: 0 }}>Program Director</span>
+                   <span style={{ color: "#64748B", fontSize: "14px", marginTop: "4px" }}>SMAK Research</span>
+                 </div>
+                 
+                 {/* Center Seal */}
+                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingBottom: "10px" }}>
+                   <div style={{ width: "80px", height: "80px", border: "3px solid #0A1930", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                     <span style={{ color: "#0A1930", fontWeight: "900", fontSize: "10px", textAlign: "center", textTransform: "uppercase", lineHeight: "1.2", letterSpacing: "2px" }}>Official<br/>Seal</span>
+                   </div>
+                 </div>
+
+                 {/* Right Signature/Date */}
+                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                   <div style={{ width: "220px", height: "1px", backgroundColor: "#94A3B8", marginBottom: "12px" }}></div>
+                   <span style={{ color: "#0F172A", fontWeight: "bold", fontSize: "16px", textTransform: "uppercase", letterSpacing: "1px", margin: 0 }}>Date Issued</span>
+                   <span style={{ color: "#64748B", fontSize: "14px", marginTop: "4px" }}>{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+                 </div>
+
+               </div>
+
              </div>
            </div>
         </div>
