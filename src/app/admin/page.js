@@ -725,17 +725,27 @@ export default function Admin() {
                 </div>
 
                 <div className="pt-4 border-t border-white/5 space-y-4">
-                   <div className="text-xs text-blue-400 font-bold uppercase tracking-widest">Signatory Configuration</div>
+                   <div className="flex items-center justify-between">
+                     <div className="text-xs text-blue-400 font-bold uppercase tracking-widest">Signatory Configuration</div>
+                     <span className="text-xs text-yellow-400 bg-yellow-400/10 border border-yellow-400/20 px-2 py-0.5 rounded font-mono">Requires DB columns</span>
+                   </div>
+                   <div className="text-xs text-gray-500 bg-[#0A0F1A] border border-yellow-500/20 rounded-lg p-3 leading-relaxed">
+                     ⚠️ Run in <strong className="text-yellow-400">Supabase SQL Editor</strong>:<br/>
+                     <code className="text-yellow-300 text-xs">ALTER TABLE public.members ADD COLUMN IF NOT EXISTS director_name text;</code><br/>
+                     <code className="text-yellow-300 text-xs">ALTER TABLE public.members ADD COLUMN IF NOT EXISTS director_sign text;</code><br/>
+                     <span className="text-gray-600">Then this will save permanently. <a href="https://supabase.com/dashboard/project/mzisaubxyuoavofqjfkd/sql/new" target="_blank" className="text-blue-400 underline">Open SQL Editor →</a></span>
+                   </div>
                    <div className="grid grid-cols-2 gap-4">
                      <div>
                        <label className="text-xs text-gray-400 mb-1 block">Director Name</label>
-                       <input type="text" value={editingMem.director_name || ''} onChange={e=>setEditingMem({...editingMem, director_name: e.target.value})} placeholder="e.g. Dr. Sarah Jenkins" className="w-full bg-black border border-gray-800 rounded px-3 py-2 text-white" />
+                       <input type="text" value={editingMem.director_name || ''} onChange={e=>setEditingMem({...editingMem, director_name: e.target.value})} placeholder="e.g. Dr. Sarah Jenkins" className="w-full bg-black border border-gray-700 rounded px-3 py-2 text-white focus:border-blue-500 focus:outline-none transition" />
                      </div>
                      <div>
-                       <label className="text-xs text-gray-400 mb-1 block">Director Signature (Text)</label>
-                       <input type="text" value={editingMem.director_sign || ''} onChange={e=>setEditingMem({...editingMem, director_sign: e.target.value})} placeholder="Leave blank to use Name" className="w-full bg-black border border-gray-800 rounded px-3 py-2 text-white" />
+                       <label className="text-xs text-gray-400 mb-1 block">Director Signature (Text / Cursive)</label>
+                       <input type="text" value={editingMem.director_sign || ''} onChange={e=>setEditingMem({...editingMem, director_sign: e.target.value})} placeholder="Leave blank to use Name" className="w-full bg-black border border-gray-700 rounded px-3 py-2 text-white focus:border-blue-500 focus:outline-none transition" />
                      </div>
                    </div>
+                   <p className="text-xs text-gray-600 italic">If Director Signature is left blank, the Director Name will be used in cursive font on the LOR/Certificate.</p>
                 </div>
 
                 <div className="pt-4 flex justify-end gap-3 border-t border-white/5 mt-6">
