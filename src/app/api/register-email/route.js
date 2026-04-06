@@ -58,8 +58,13 @@ export async function POST(req) {
   Track your progress, download course-specific certificates, and request Letters of Recommendation (LOR) here:
   <br/><br/>
   <a href="${dashboardLink}"
-  style="background:#2563eb;color:white;padding:12px 24px;text-decoration:none;border-radius:8px;display:inline-block;font-weight:bold;">
+  style="background:#2563eb;color:white;padding:12px 24px;text-decoration:none;border-radius:8px;display:inline-block;font-weight:bold;margin-bottom:10px;">
   Open Student Portal &rarr;
+  </a>
+  <br/>
+  <a href="${generateIdLink}"
+  style="background:#0b0e14;color:#00f0ff;padding:12px 24px;text-decoration:none;border-radius:8px;border:1px solid #00f0ff;display:inline-block;font-weight:bold;">
+  Generate Virtual ID Card
   </a>
 </p>
 

@@ -445,17 +445,25 @@ export default function Dashboard() {
               )}
             </div>
           </div>
-          <button 
-            onClick={() => { 
-              localStorage.removeItem("smak_entry_no");
-              setIsAuthenticated(false); 
-              setUserData(null); 
-              window.history.replaceState(null, '', window.location.pathname);
-            }} 
-            className="px-4 py-2 border border-blue-500/30 bg-blue-500/5 text-blue-400 hover:text-white hover:bg-blue-600 hover:border-blue-500 transition rounded-lg text-sm font-bold tracking-wider uppercase"
-          >
-            Sign Out
-          </button>
+          <div className="flex flex-col md:flex-row gap-3">
+            <a 
+              href={`/generate-id?entry=${encodeURIComponent(userData.entry_no)}&name=${encodeURIComponent(userData.name)}`}
+              className="px-4 py-2 border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 hover:text-black hover:bg-cyan-400 transition-all rounded-lg text-sm font-bold tracking-wider uppercase text-center flex items-center justify-center"
+            >
+              Get Virtual ID
+            </a>
+            <button 
+              onClick={() => { 
+                localStorage.removeItem("smak_entry_no");
+                setIsAuthenticated(false); 
+                setUserData(null); 
+                window.history.replaceState(null, '', window.location.pathname);
+              }} 
+              className="px-4 py-2 border border-blue-500/30 bg-blue-500/5 text-blue-400 hover:text-white hover:bg-blue-600 hover:border-blue-500 transition rounded-lg text-sm font-bold tracking-wider uppercase"
+            >
+              Sign Out
+            </button>
+          </div>
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
