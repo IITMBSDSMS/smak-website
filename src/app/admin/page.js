@@ -447,10 +447,11 @@ export default function Admin() {
     // update mutation by safely deleting the row and re-inserting it completely intact with our new overrides!
     
     try {
-       // Use upsert with onConflict on 'id' — this atomically updates the row
-       // without needing to delete first, bypassing the RLS delete restriction
-       const patchedMember = {
-           id: editingMem.id,
+       // Use targeted .update() — only modifies the columns we specify,
+       // leaving name/email/phone/etc. completely untouched
+       const { error: updateError } = await supabase
+         .from("members")
+         .update({
            course: editingMem.course,
            attendance: editingMem.attendance,
            quiz_avg: editingMem.quiz_avg,
@@ -458,19 +459,15 @@ export default function Admin() {
            lor_status: editingMem.lor_status,
            director_name: editingMem.director_name || null,
            director_sign: editingMem.director_sign || null,
-       };
+         })
+         .eq("id", editingMem.id);
 
-       const { error: upsertError } = await supabase
-         .from("members")
-         .upsert([patchedMember], { onConflict: 'id' });
-
-       if (upsertError) {
-         console.error(upsertError);
-         alert("Save failed: " + upsertError.message);
+       if (updateError) {
+         console.error(updateError);
+         alert("Save failed: " + updateError.message);
        } else {
          // If LOR just became eligible — notify the student via email!
-         const prevLorStatus = editingMem._prevLorStatus;
-         if (editingMem.lor_status === 'eligible' && prevLorStatus !== 'eligible') {
+         if (editingMem.lor_status === 'eligible' && editingMem._prevLorStatus !== 'eligible') {
            try {
              await fetch('/api/lor-approved', {
                method: 'POST',
@@ -487,7 +484,7 @@ export default function Admin() {
            }
          }
          setLmsModalOpen(false);
-         fetchMembers(); 
+         fetchMembers();
        }
 
     } catch (err) {
