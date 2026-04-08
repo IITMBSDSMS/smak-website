@@ -5,8 +5,16 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "mzisaubxyuavofqjfk.supabase.co",
+        hostname: "mzisaubxyuoavofqjfkd.supabase.co",
       },
+      {
+        protocol: "https",
+        hostname: "*.supabase.co", // Catch-all for any other supabase projects
+      },
+      {
+        protocol: "https",
+        hostname: "**", // Extreme fallback for random external images
+      }
     ],
   },
 };
