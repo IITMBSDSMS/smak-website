@@ -117,9 +117,9 @@ export default function Home() {
             <Image
               src="/logo.png"
               fill
+              sizes="(max-width: 768px) 128px, 128px"
               alt="SMAK logo"
               className="object-cover"
-              unoptimized
             />
           </motion.div>
         </div>
@@ -296,7 +296,7 @@ export default function Home() {
               >
                 {/* Fallback image style if event.image fails */}
                 <div className="absolute inset-0 bg-gray-900 flex items-center justify-center">
-                  <Image src={event.image || '/logo.png'} fill className="object-cover" alt="Event" unoptimized/>
+                  <Image src={event.image || '/logo.png'} fill sizes="(max-width: 768px) 100vw, 350px" className="object-cover" alt="Event" />
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-black-void via-black/40 to-transparent"></div>
                 <div className="absolute bottom-6 left-6 right-6">
@@ -338,7 +338,7 @@ export default function Home() {
                 <GlassCard key={i} className="w-[85vw] sm:w-[380px] flex-shrink-0" hoverEffect={false}>
                   <div className="flex items-center gap-5">
                     <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden bg-gray-800 border flex-shrink-0 border-gray-700 relative shadow-[0_0_15px_rgba(0,240,255,0.2)]">
-                      <Image src={leader.image || '/logo.png'} fill className="object-cover" alt="leader" unoptimized/>
+                      <Image src={leader.image || '/logo.png'} fill sizes="(max-width: 768px) 80px, 80px" className="object-cover" alt="leader" />
                     </div>
                     <div>
                       <h4 className="text-base sm:text-lg font-bold text-white tracking-wide">{leader.name || `Unit 0${i}`}</h4>
@@ -356,7 +356,7 @@ export default function Home() {
                 <GlassCard key={"dup"+i} className="w-[85vw] sm:w-[380px] flex-shrink-0" hoverEffect={false}>
                   <div className="flex items-center gap-5">
                     <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden bg-gray-800 border flex-shrink-0 border-gray-700 relative shadow-[0_0_15px_rgba(0,240,255,0.2)]">
-                      <Image src={leader.image || '/logo.png'} fill className="object-cover" alt="leader" unoptimized/>
+                      <Image src={leader.image || '/logo.png'} fill sizes="(max-width: 768px) 80px, 80px" className="object-cover" alt="leader" />
                     </div>
                     <div>
                       <h4 className="text-base sm:text-lg font-bold text-white tracking-wide">{leader.name || `Unit 0${i}`}</h4>
@@ -385,14 +385,14 @@ export default function Home() {
             <div className="flex items-center gap-24 min-w-max px-12">
               {(collabs.length > 0 ? collabs : [1,2,3,4,5]).map((c, i) => (
                 <div key={i} className="relative w-48 h-20 grayscale hover:grayscale-0 hover:drop-shadow-[0_0_15px_rgba(0,240,255,0.8)] transition-all duration-300">
-                  <Image src={c.logo || '/logo.png'} fill className="object-contain" alt="partner" unoptimized/>
+                  <Image src={c.logo || '/logo.png'} fill sizes="(max-width: 768px) 192px, 192px" className="object-contain" alt="partner" />
                 </div>
               ))}
             </div>
             <div className="flex items-center gap-24 min-w-max px-12">
               {(collabs.length > 0 ? collabs : [1,2,3,4,5]).map((c, i) => (
                 <div key={"dup"+i} className="relative w-48 h-20 grayscale hover:grayscale-0 hover:drop-shadow-[0_0_15px_rgba(0,240,255,0.8)] transition-all duration-300">
-                  <Image src={c.logo || '/logo.png'} fill className="object-contain" alt="partner" unoptimized/>
+                  <Image src={c.logo || '/logo.png'} fill sizes="(max-width: 768px) 192px, 192px" className="object-contain" alt="partner" />
                 </div>
               ))}
             </div>

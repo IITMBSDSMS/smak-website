@@ -16,8 +16,60 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "SMAK | Society for Medical Academia and Knowledge",
-  description: "Empowering medical students through research, collaboration and academic excellence.",
+  metadataBase: new URL("https://smakresearch.com"),
+  title: {
+    default: "SMAK | Society for Medical Academia and Knowledge",
+    template: "%s | SMAK Research",
+  },
+  description: "SMAK is the premier global network empowering medical students and clinical researchers through cutting-edge research, academic excellence, and robust clinical collaborations.",
+  keywords: [
+    "SMAK", 
+    "SMAK research",
+    "Society for Medical Academia and Knowledge", 
+    "medical research club", 
+    "medical students research", 
+    "clinical research network", 
+    "healthcare innovation India", 
+    "medical academia", 
+    "manthaan healthcare research"
+  ],
+  authors: [{ name: "SMAK Research" }],
+  creator: "SMAK Research",
+  publisher: "SMAK Research",
+  openGraph: {
+    title: "SMAK | Society for Medical Academia and Knowledge",
+    description: "Empowering medical students worldwide through research, collaboration, and academic excellence.",
+    url: "https://smakresearch.com",
+    siteName: "SMAK Research",
+    images: [
+      {
+        // Add a proper og-image if you have one. Falling back to logo.
+        url: "/logo.png",
+        width: 1200,
+        height: 630,
+        alt: "SMAK Research Network",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "SMAK | Society for Medical Academia and Knowledge",
+    description: "Empowering medical students worldwide through research, collaboration, and academic excellence.",
+    images: ["/logo.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
 };
 
 export default function RootLayout({ children }) {

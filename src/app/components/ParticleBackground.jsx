@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useRef } from "react"
+import { useMemo, useRef, useState, useEffect } from "react"
 import { Canvas, useFrame } from "@react-three/fiber"
 import { Points, PointMaterial } from "@react-three/drei"
 import * as THREE from "three"
@@ -43,11 +43,22 @@ function Particles({ count = 800 }) {
 }
 
 export default function ParticleBackground() {
+  const [shouldRenderWebGL, setShouldRenderWebGL] = useState(false)
+
+  useEffect(() => {
+    // Only enable heavy 3D rendering on actual desktop screens
+    if (window.matchMedia("(pointer: fine)").matches && window.innerWidth > 768) {
+      setShouldRenderWebGL(true)
+    }
+  }, [])
+
   return (
     <div className="fixed inset-0 w-full h-full z-[-1] pointer-events-none opacity-50 bg-[#030712] transition-opacity duration-1000">
-      <Canvas camera={{ position: [0, 0, 5], fov: 60 }} className="w-full h-full">
-        <Particles />
-      </Canvas>
+      {shouldRenderWebGL && (
+        <Canvas camera={{ position: [0, 0, 5], fov: 60 }} className="w-full h-full" dpr={[1, 1.5]}>
+          <Particles />
+        </Canvas>
+      )}
     </div>
   )
 }
