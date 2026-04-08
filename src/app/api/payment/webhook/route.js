@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 import { sendInvoiceEmail, sendKitAndSOPEmail } from '@/lib/email-automation';
 
