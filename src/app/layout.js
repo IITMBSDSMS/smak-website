@@ -2,6 +2,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import MagneticCursor from "./components/MagneticCursor";
 import ParticleBackground from "./components/ParticleBackground";
+import Preloader from "./components/Preloader";
 import Script from "next/script";
 
 const geistSans = Geist({
@@ -25,6 +26,7 @@ export default function RootLayout({ children }) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black-void text-gray-100 min-h-screen`}
       >
+        <Preloader />
         <MagneticCursor />
         <ParticleBackground />
         
