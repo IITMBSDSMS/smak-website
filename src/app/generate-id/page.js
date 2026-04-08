@@ -16,28 +16,21 @@ const supabase = createClient(
 )
  
 function GenerateIDComponent() {
-  const [name, setName] = useState("John Doe")
-  const [phone, setPhone] = useState("+91 00000 00000")
+  const searchParams = useSearchParams()
+  const nameParam = searchParams ? searchParams.get("name") : null
+  const phoneParam = searchParams ? searchParams.get("phone") : null
+  const entryParam = searchParams ? searchParams.get("entry") : null
+
+  const [name, setName] = useState(nameParam || "John Doe")
+  const [phone, setPhone] = useState(phoneParam ? phoneParam.replace(" ", "+") : "+91 00000 00000")
   const [college, setCollege] = useState("Institute Name")
-  const [entry, setEntry] = useState("")
+  const [entry, setEntry] = useState(entryParam || "")
   const [photoPreview, setPhotoPreview] = useState(null)
   const [qrUrl, setQrUrl] = useState("")
   const [loading, setLoading] = useState(false)
   const [generating, setGenerating] = useState(false)
 
   const idCardRef = useRef(null)
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const entryFromURL = params.get("entry");
-      const nameParam = params.get("name");
-      const phoneParam = params.get("phone");
-
-      if (entryFromURL) setEntry(entryFromURL);
-      if (nameParam) setName(nameParam);
-      if (phoneParam) setPhone(phoneParam.replace(" ", "+"));
-    }
-  }, [])
 
   useEffect(() => {
     if (!entry) return
