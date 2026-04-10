@@ -1,12 +1,39 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@supabase/supabase-js";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import QRCode from "qrcode";
 import Navbar from "../components/Navbar";
+
+function Toast({ toasts }) {
+  return (
+    <div className="fixed bottom-6 right-6 z-[300] flex flex-col gap-2">
+      <AnimatePresence>
+        {toasts.map(t => (
+          <motion.div
+            key={t.id}
+            initial={{ opacity: 0, x: 60, scale: 0.9 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: 60, scale: 0.9 }}
+            className={`flex items-center gap-3 px-5 py-3.5 rounded-xl shadow-2xl border text-sm font-semibold max-w-xs ${
+              t.type === 'success' ? 'bg-green-900/95 border-green-500/40 text-green-200' :
+              t.type === 'error' ? 'bg-red-900/95 border-red-500/40 text-red-200' :
+              'bg-[#0A1220] border-blue-500/30 text-blue-200'
+            }`}
+          >
+            {t.type === 'success' && <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>}
+            {t.type === 'error' && <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>}
+            {t.type === 'info' && <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+            <span>{t.message}</span>
+          </motion.div>
+        ))}
+      </AnimatePresence>
+    </div>
+  );
+}
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -19,6 +46,9 @@ export default function Dashboard() {
   const [authError, setAuthError] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userData, setUserData] = useState(null);
+  const [toasts, setToasts] = useState([]);
+  const [myEvents, setMyEvents] = useState([]);
+  const [eventsLoading, setEventsLoading] = useState(false);
   
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingLor, setIsGeneratingLor] = useState(false);
@@ -26,6 +56,12 @@ export default function Dashboard() {
   const [qrCodeURI, setQrCodeURI] = useState("");
   const certRef = useRef(null);
   const lorRef = useRef(null);
+
+  const showToast = useCallback((message, type = 'success') => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, message, type }]);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 5000);
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -35,7 +71,6 @@ export default function Dashboard() {
       setEntryNo(entryParam);
       handleLogin(entryParam);
     } else {
-      // Persistence: Check localStorage if no URL param
       const savedId = localStorage.getItem("smak_entry_no");
       if (savedId) {
         setEntryNo(savedId);
@@ -56,6 +91,29 @@ export default function Dashboard() {
       .catch(err => console.error("QR Generation Error:", err));
     }
   }, [userData]);
+
+  // Fetch enrolled events when user data is loaded
+  useEffect(() => {
+    if (userData?.email) {
+      fetchMyEvents(userData.email);
+    }
+  }, [userData]);
+
+  const fetchMyEvents = async (email) => {
+    setEventsLoading(true);
+    try {
+      const { data } = await supabase
+        .from('events_enrollments')
+        .select('*, event:event_id(title, date, location, category, image, is_paid, price)')
+        .eq('email', email)
+        .order('enrolled_at', { ascending: false });
+      setMyEvents(data || []);
+    } catch (err) {
+      console.error('Failed to fetch events:', err);
+    } finally {
+      setEventsLoading(false);
+    }
+  };
 
   const handleLogin = async (overrideEntry) => {
     const idToFetch = overrideEntry || entryNo;
@@ -118,11 +176,11 @@ export default function Dashboard() {
       pdf.save(`SMAK-Certificate-${userData.entry_no}.pdf`);
       
       setUserData(prev => ({...prev, cert_status: 'generated'}));
-      alert("Certificate generated and downloaded successfully!");
+      showToast('Certificate downloaded successfully!', 'success');
 
     } catch (err) {
       console.error(err);
-      alert("Error generating the high-resolution certificate. Please try again.");
+      showToast('Failed to generate certificate. Please try again.', 'error');
     } finally {
       setIsGenerating(false);
     }
@@ -150,11 +208,11 @@ export default function Dashboard() {
       pdf.save(`SMAK-LOR-${userData.entry_no}.pdf`);
       
       setUserData(prev => ({...prev, lor_status: 'generated'}));
-      alert("Letter of Recommendation generated and downloaded successfully!");
+      showToast('Letter of Recommendation downloaded!', 'success');
 
     } catch (err) {
       console.error(err);
-      alert("Error generating the high-resolution LOR. Please try again.");
+      showToast('Failed to generate LOR. Please try again.', 'error');
     } finally {
       setIsGeneratingLor(false);
     }
@@ -170,9 +228,9 @@ export default function Dashboard() {
            headers: { "Content-Type": "application/json" },
            body: JSON.stringify({ entry_no: userData.entry_no, name: userData.name })
          });
-         alert(`Success! Email sent to Admin to manually review LOR eligibility for ${userData.entry_no}. Our team will reach out directly.`);
+         showToast(`LOR request sent! Our team will review ${userData.entry_no} shortly.`, 'info');
        } catch(err) {
-         alert("Failed to send request. Please try again.");
+         showToast('Failed to send request. Please try again.', 'error');
        }
     }
   };
@@ -527,6 +585,51 @@ export default function Dashboard() {
             </div>
           </motion.div>
         </div>
+
+        {/* MY ENROLLED EVENTS */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mt-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-white">My Events</h2>
+            <a href="/events" className="text-xs text-blue-400 hover:text-white transition font-mono uppercase tracking-widest border border-blue-500/20 px-3 py-1.5 rounded-lg hover:border-blue-500/50">Browse Events →</a>
+          </div>
+          <div className="bg-[#0A1220]/80 border border-white/5 rounded-2xl overflow-hidden">
+            {eventsLoading ? (
+              <div className="flex justify-center py-10"><div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" /></div>
+            ) : myEvents.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center px-6">
+                <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-2xl mb-4">📅</div>
+                <p className="text-gray-400 text-sm">You haven't registered for any events yet.</p>
+                <a href="/events" className="mt-3 text-blue-400 text-sm hover:text-white transition">Browse upcoming events →</a>
+              </div>
+            ) : (
+              <div className="divide-y divide-white/[0.05]">
+                {myEvents.map(enr => (
+                  <div key={enr.id} className="flex items-center gap-4 p-4 hover:bg-white/[0.02] transition">
+                    {enr.event?.image ? (
+                      <img src={enr.event.image} alt={enr.event?.title} className="w-16 h-12 rounded-xl object-cover flex-shrink-0" />
+                    ) : (
+                      <div className="w-16 h-12 rounded-xl bg-gray-900 border border-gray-800 flex items-center justify-center text-gray-600 flex-shrink-0">📅</div>
+                    )}
+                    <div className="flex-grow min-w-0">
+                      <div className="font-semibold text-white text-sm truncate">{enr.event?.title || 'Event'}</div>
+                      <div className="text-xs text-gray-500 font-mono mt-0.5">{enr.event?.date} · {enr.event?.location}</div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border ${
+                        enr.payment_status === 'success' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                        enr.payment_status === 'free' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                        'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
+                      }`}>
+                        {enr.payment_status === 'free' ? '✓ Enrolled' : enr.payment_status === 'success' ? '✓ Paid' : enr.payment_status}
+                      </span>
+                      {enr.amount > 0 && <span className="text-xs font-bold text-gray-400">₹{enr.amount}</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </motion.div>
       </div>
     {/* Modules Modal */}
     {isModulesOpen && (
@@ -592,6 +695,9 @@ export default function Dashboard() {
         </motion.div>
       </div>
     )}
+
+    {/* Toast Notifications */}
+    <Toast toasts={toasts} />
 
     </div>
   );

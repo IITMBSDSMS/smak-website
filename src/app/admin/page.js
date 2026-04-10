@@ -2,25 +2,34 @@
 
 import { useState, useEffect } from "react"
 import { createClient } from "@supabase/supabase-js"
+import { AnimatePresence, motion } from "framer-motion"
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
+// Simple admin auth gate
+const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || "smak@admin2026"
+
 export default function Admin() {
+
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [adminPassword, setAdminPassword] = useState("")
+  const [authError, setAuthError] = useState("")
 
   const [tab, setTab] = useState("members")
 
-  // Tab state: supports members, leaders, events
   const [members, setMembers] = useState([])
   const [leaders, setLeaders] = useState([])
   const [events, setEvents] = useState([])
   const [collabs, setCollabs] = useState([])
   const [mentors, setMentors] = useState([])
   const [scholars, setScholars] = useState([])
-
   const [boardMembers, setBoardMembers] = useState([])
+  const [contactMessages, setContactMessages] = useState([])
+  const [contactLoading, setContactLoading] = useState(false)
+  const [contactFilter, setContactFilter] = useState("all") // all | unread | read
 
   // LMS Modal State
   const [lmsModalOpen, setLmsModalOpen] = useState(false)
@@ -55,9 +64,21 @@ export default function Admin() {
     title: "",
     date: "",
     location: "",
-    description: ""
+    description: "",
+    price: "",
+    capacity: "",
+    category: "Workshop",
+    is_paid: false,
+    registration_deadline: "",
   })
   const [eventImage, setEventImage] = useState(null)
+  const [editingEventId, setEditingEventId] = useState(null)
+  const [editEventForm, setEditEventForm] = useState({})
+  const [enrollments, setEnrollments] = useState([])
+  const [enrollmentsLoading, setEnrollmentsLoading] = useState(false)
+  const [selectedEventForEnrollments, setSelectedEventForEnrollments] = useState(null)
+  const [enrollmentSearch, setEnrollmentSearch] = useState("")
+  const [eventsSubTab, setEventsSubTab] = useState("list") // list | enrollments
 
   const [collabForm, setCollabForm] = useState({
     name: "",
@@ -73,6 +94,14 @@ export default function Admin() {
   const [scholarImage, setScholarImage] = useState(null)
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      const saved = localStorage.getItem('smak_admin_auth')
+      if (saved === 'true') setIsAuthenticated(true)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!isAuthenticated) return
     fetchMembers()
     fetchLeaders()
     fetchEvents()
@@ -80,7 +109,7 @@ export default function Admin() {
     fetchMentors()
     fetchScholars()
     fetchBoard()
-  }, [])
+  }, [isAuthenticated])
 
   async function fetchMembers() {
     setLoading(true)
@@ -109,9 +138,49 @@ export default function Admin() {
     const { data, error } = await supabase
       .from("events")
       .select("*")
-      .order("date", { ascending: false })
+      .order("date", { ascending: true })
 
-    if (!error) setEvents(data)
+    if (!error) setEvents(data || [])
+  }
+
+  async function fetchEnrollments(eventId) {
+    setEnrollmentsLoading(true)
+    const query = supabase
+      .from("events_enrollments")
+      .select("*")
+      .order("enrolled_at", { ascending: false })
+    
+    if (eventId) query.eq("event_id", eventId)
+    
+    const { data, error } = await query
+    if (!error) setEnrollments(data || [])
+    setEnrollmentsLoading(false)
+  }
+
+  async function updateEvent(id) {
+    const updatePayload = {
+      title: editEventForm.title,
+      date: editEventForm.date,
+      location: editEventForm.location,
+      description: editEventForm.description,
+      price: parseFloat(editEventForm.price) || 0,
+      capacity: parseInt(editEventForm.capacity) || 100,
+      category: editEventForm.category || "Workshop",
+      is_paid: editEventForm.is_paid || false,
+      registration_deadline: editEventForm.registration_deadline || null,
+    }
+
+    const { error } = await supabase
+      .from("events")
+      .update(updatePayload)
+      .eq("id", id)
+
+    if (!error) {
+      setEditingEventId(null)
+      fetchEvents()
+    } else {
+      alert("Update failed: " + error.message)
+    }
   }
 
   async function fetchCollabs() {
@@ -139,12 +208,28 @@ export default function Admin() {
   }
 
   async function fetchBoard() {
-    const { data, error } = await supabase
-      .from("board_members")
-      .select("*")
-      .order("created_at", { ascending: true })
+    const { data, error } = await supabase.from("board").select("*").order("created_at", { ascending: false })
+    if (!error) setBoardMembers(data || [])
+  }
 
-    if (!error) setBoardMembers(data)
+  async function fetchContactMessages() {
+    setContactLoading(true)
+    const { data } = await supabase
+      .from('contact_messages')
+      .select('*')
+      .order('created_at', { ascending: false })
+    setContactMessages(data || [])
+    setContactLoading(false)
+  }
+
+  async function markMessageRead(id) {
+    await supabase.from('contact_messages').update({ status: 'read' }).eq('id', id)
+    setContactMessages(prev => prev.map(m => m.id === id ? { ...m, status: 'read' } : m))
+  }
+
+  async function deleteMessage(id) {
+    await supabase.from('contact_messages').delete().eq('id', id)
+    setContactMessages(prev => prev.filter(m => m.id !== id))
   }
 
   async function addLeader(e) {
@@ -222,43 +307,31 @@ export default function Admin() {
 
     if (eventImage) {
       const fileName = `${Date.now()}-${eventImage.name}`
-
-      const { error: uploadError } = await supabase
-        .storage
-        .from("events")
-        .upload(fileName, eventImage)
-
-      if (uploadError) {
-        alert("Image upload failed")
-        return
-      }
-
-      const { data } = supabase
-        .storage
-        .from("events")
-        .getPublicUrl(fileName)
-
+      const { error: uploadError } = await supabase.storage.from("events").upload(fileName, eventImage)
+      if (uploadError) { alert("Image upload failed: " + uploadError.message); return }
+      const { data } = supabase.storage.from("events").getPublicUrl(fileName)
       imageUrl = data.publicUrl
     }
 
-    const { error } = await supabase
-      .from("events")
-      .insert([
-        {
-          ...eventForm,
-          image: imageUrl
-        }
-      ])
+    const { error } = await supabase.from("events").insert([{
+      title: eventForm.title,
+      date: eventForm.date,
+      location: eventForm.location,
+      description: eventForm.description,
+      price: parseFloat(eventForm.price) || 0,
+      capacity: parseInt(eventForm.capacity) || 100,
+      category: eventForm.category || "Workshop",
+      is_paid: eventForm.is_paid || false,
+      registration_deadline: eventForm.registration_deadline || null,
+      image: imageUrl
+    }])
 
     if (!error) {
-      setEventForm({
-        title: "",
-        date: "",
-        location: "",
-        description: ""
-      })
+      setEventForm({ title: "", date: "", location: "", description: "", price: "", capacity: "", category: "Workshop", is_paid: false, registration_deadline: "" })
       setEventImage(null)
       fetchEvents()
+    } else {
+      alert("Failed to add event: " + error.message)
     }
   }
 
@@ -528,6 +601,62 @@ export default function Admin() {
     a.click()
   }
 
+  // Admin password gate
+  if (!isAuthenticated) {
+    return (
+      <main className="min-h-screen bg-[#050B14] text-white flex items-center justify-center">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[500px] bg-blue-900/10 blur-[150px] rounded-full z-0 pointer-events-none" />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative z-10 w-full max-w-sm px-6"
+        >
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-red-500/30 text-xs text-red-400 mb-4 tracking-widest uppercase font-mono">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+              Restricted Access
+            </div>
+            <h1 className="text-3xl font-bold text-white mb-2">Admin Terminal</h1>
+            <p className="text-gray-500 text-sm">Enter the admin passphrase to continue.</p>
+          </div>
+          <div className="bg-[#0A1220]/80 border border-white/5 backdrop-blur-xl rounded-2xl p-6 shadow-2xl space-y-4">
+            <input
+              type="password"
+              placeholder="Enter passphrase..."
+              value={adminPassword}
+              onChange={e => setAdminPassword(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  if (adminPassword === ADMIN_PASSWORD) {
+                    localStorage.setItem('smak_admin_auth', 'true')
+                    setIsAuthenticated(true)
+                  } else {
+                    setAuthError('Incorrect passphrase. Access denied.')
+                  }
+                }
+              }}
+              className="w-full bg-black/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-red-500 focus:outline-none font-mono tracking-wider"
+            />
+            {authError && <p className="text-red-400 text-xs text-center font-mono">{authError}</p>}
+            <button
+              onClick={() => {
+                if (adminPassword === ADMIN_PASSWORD) {
+                  localStorage.setItem('smak_admin_auth', 'true')
+                  setIsAuthenticated(true)
+                } else {
+                  setAuthError('Incorrect passphrase. Access denied.')
+                }
+              }}
+              className="w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold py-3 rounded-xl hover:from-blue-500 hover:to-blue-400 transition-all"
+            >
+              Authenticate
+            </button>
+          </div>
+        </motion.div>
+      </main>
+    )
+  }
+
   return (
     <main className="min-h-screen bg-[#050B14] text-white flex justify-center py-20 relative overflow-hidden font-sans">
       
@@ -550,35 +679,53 @@ export default function Admin() {
         </div>
 
         {/* METRICS CARDS */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-12">
           {[
-            { label: "Members", val: members.length },
-            { label: "Leaders", val: leaders.length },
-            { label: "Events", val: events.length },
-            { label: "Collaborators", val: collabs.length }
+            { label: "Members", val: members.length, color: "blue" },
+            { label: "Leaders", val: leaders.length, color: "blue" },
+            { label: "Events", val: events.length, color: "blue" },
+            { label: "Enrollments", val: enrollments.length > 0 ? enrollments.length : "—", color: "purple" },
+            { label: "Messages", val: contactMessages.filter(m => m.status === 'unread').length > 0 ? `${contactMessages.filter(m=>m.status==='unread').length} new` : contactMessages.length, color: contactMessages.filter(m=>m.status==='unread').length > 0 ? "amber" : "blue" },
           ].map((m, i) => (
-            <div key={i} className="bg-gradient-to-br from-[#0A1220]/80 to-[#050A10]/90 backdrop-blur-xl border border-blue-500/20 rounded-2xl p-6 shadow-2xl relative overflow-hidden group">
-              <div className="absolute inset-0 bg-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              <div className="text-blue-400 text-xs font-mono uppercase tracking-widest mb-2 flex items-center justify-between">
-                {m.label} 
-                <span className="w-8 h-px bg-blue-500/30"></span>
-              </div>
-              <div className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-500">{m.val}</div>
+            <div key={i} className="bg-gradient-to-br from-[#0A1220]/80 to-[#050A10]/90 backdrop-blur-xl border border-blue-500/20 rounded-2xl p-5 shadow-2xl relative overflow-hidden group">
+              <div className="absolute inset-0 bg-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="text-blue-400 text-xs font-mono uppercase tracking-widest mb-2">{m.label}</div>
+              <div className={`text-3xl font-bold bg-clip-text text-transparent ${
+                m.color === 'purple' ? 'bg-gradient-to-b from-purple-300 to-purple-600' :
+                m.color === 'amber' ? 'bg-gradient-to-b from-amber-300 to-amber-600' :
+                'bg-gradient-to-b from-white to-gray-500'
+              }`}>{m.val}</div>
             </div>
           ))}
         </div>
 
         {/* NAVIGATION TABS */}
-        <div className="flex flex-wrap gap-3 bg-[#0A1220]/50 p-2.5 rounded-2xl border border-white/5 backdrop-blur-md w-max mb-10 shadow-xl">
-          {["members", "leaders", "events", "collabs", "mentors", "scholars", "board"].map(t => (
+        <div className="flex flex-wrap gap-2 bg-[#0A1220]/50 p-2 rounded-2xl border border-white/5 backdrop-blur-md mb-10 shadow-xl">
+          {["members", "leaders", "events", "collabs", "mentors", "scholars", "board", "inbox"].map(t => (
             <button
               key={t}
-              onClick={() => setTab(t)}
-              className={`px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all duration-300 ${tab === t 
-                ? 'bg-gradient-to-r from-blue-600 to-blue-400 text-white shadow-[0_0_20px_rgba(37,99,235,0.4)]' 
-                : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+              onClick={() => {
+                setTab(t)
+                if (t === 'events') setEventsSubTab('list')
+                if (t === 'inbox') fetchContactMessages()
+              }}
+              className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-widest transition-all duration-300 relative ${
+                tab === t 
+                  ? 'bg-gradient-to-r from-blue-600 to-blue-400 text-white shadow-[0_0_20px_rgba(37,99,235,0.4)]' 
+                  : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
             >
-              {t === "collabs" ? "Collaborators" : t}
+              {t === "collabs" ? "Partners" :
+               t === "events" ? `Events (${events.length})` : 
+               t === "inbox" ? (
+                 <span className="flex items-center gap-1.5">
+                   Inbox
+                   {contactMessages.filter(m => m.status === 'unread').length > 0 && (
+                     <span className="w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center">
+                       {contactMessages.filter(m => m.status === 'unread').length}
+                     </span>
+                   )}
+                 </span>
+               ) : t}
             </button>
           ))}
         </div>
@@ -908,103 +1055,316 @@ export default function Admin() {
         )}
 
         {/* EVENTS TAB */}
-
         {tab === "events" && (
+          <div className="space-y-8">
 
-          <div className="space-y-10">
-
-            <form
-              onSubmit={addEvent}
-              className="bg-[#0b0b0b] border border-gray-800 rounded-xl p-6 space-y-4"
-            >
-
-              <h2 className="text-xl font-semibold">Add Event</h2>
-
-              <input
-                placeholder="Event Title"
-                value={eventForm.title}
-                onChange={(e)=>setEventForm({...eventForm,title:e.target.value})}
-                className="w-full bg-black border border-gray-700 p-3 rounded-md"
-              />
-
-              <input
-                type="date"
-                value={eventForm.date}
-                onChange={(e)=>setEventForm({...eventForm,date:e.target.value})}
-                className="w-full bg-black border border-gray-700 p-3 rounded-md"
-              />
-
-              <input
-                placeholder="Location"
-                value={eventForm.location}
-                onChange={(e)=>setEventForm({...eventForm,location:e.target.value})}
-                className="w-full bg-black border border-gray-700 p-3 rounded-md"
-              />
-
-              <textarea
-                placeholder="Description"
-                value={eventForm.description}
-                onChange={(e)=>setEventForm({...eventForm,description:e.target.value})}
-                className="w-full bg-black border border-gray-700 p-3 rounded-md"
-              />
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e)=>setEventImage(e.target.files[0])}
-                className="w-full bg-black border border-gray-700 p-3 rounded-md"
-              />
-
-              <button className="bg-white text-black px-6 py-2 rounded-md">
-                Add Event
-              </button>
-
-            </form>
-
-            <div className="bg-[#0b0b0b] border border-gray-800 rounded-xl">
-
-              <div className="px-6 py-4 border-b border-gray-800">
-                Total Events: {events.length}
-              </div>
-
-              {events.map((ev)=>(
-                <div
-                  key={ev.id}
-                  className="flex items-center justify-between p-6 border-t border-gray-800"
+            {/* Sub-tab switcher */}
+            <div className="flex gap-2 bg-[#0A1220]/50 p-1.5 rounded-xl border border-white/5 w-max">
+              {["list", "add", "enrollments"].map(st => (
+                <button
+                  key={st}
+                  onClick={() => {
+                    setEventsSubTab(st)
+                    if (st === "enrollments") { setSelectedEventForEnrollments(null); fetchEnrollments(null) }
+                  }}
+                  className={`px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${
+                    eventsSubTab === st ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'
+                  }`}
                 >
-
-                  <div className="flex items-center gap-4">
-
-                    {ev.image && (
-                      <img
-                        src={ev.image}
-                        alt={ev.title}
-                        className="w-14 h-14 rounded-md object-cover"
-                      />
-                    )}
-
-                    <div>
-                      <div className="font-semibold">{ev.title}</div>
-                      <div className="text-gray-400 text-sm">
-                        {ev.date} • {ev.location}
-                      </div>
-                    </div>
-
-                  </div>
-
-                  <button
-                    onClick={()=>deleteEvent(ev.id)}
-                    className="text-red-400"
-                  >
-                    Delete
-                  </button>
-
-                </div>
+                  {st === "list" ? `Events (${events.length})` : st === "add" ? "+ Add Event" : `Enrollments`}
+                </button>
               ))}
-
             </div>
 
-          </div>
+            {/* ── ADD EVENT FORM ── */}
+            {eventsSubTab === "add" && (
+              <form onSubmit={addEvent} className="bg-[#0A1220]/80 border border-blue-900/30 backdrop-blur-xl rounded-2xl p-6 space-y-5 shadow-2xl">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+                  <h2 className="text-lg font-bold text-white tracking-wide">Add New Event</h2>
+                </div>
 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="md:col-span-2">
+                    <label className="text-xs text-gray-400 font-mono uppercase tracking-widest block mb-1.5">Event Title *</label>
+                    <input required placeholder="RISE Mentorship Program" value={eventForm.title} onChange={(e)=>setEventForm({...eventForm,title:e.target.value})} className="w-full bg-black/50 border border-gray-700/60 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 transition-all" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-400 font-mono uppercase tracking-widest block mb-1.5">Date *</label>
+                    <input required type="date" value={eventForm.date} onChange={(e)=>setEventForm({...eventForm,date:e.target.value})} className="w-full bg-black/50 border border-gray-700/60 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-all" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-400 font-mono uppercase tracking-widest block mb-1.5">Location</label>
+                    <input placeholder="Online / Delhi" value={eventForm.location} onChange={(e)=>setEventForm({...eventForm,location:e.target.value})} className="w-full bg-black/50 border border-gray-700/60 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 transition-all" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-400 font-mono uppercase tracking-widest block mb-1.5">Category</label>
+                    <select value={eventForm.category} onChange={(e)=>setEventForm({...eventForm,category:e.target.value})} className="w-full bg-black/50 border border-gray-700/60 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-all">
+                      {["Workshop","Conference","Symposium","Webinar"].map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-400 font-mono uppercase tracking-widest block mb-1.5">Capacity (seats)</label>
+                    <input type="number" min="1" placeholder="100" value={eventForm.capacity} onChange={(e)=>setEventForm({...eventForm,capacity:e.target.value})} className="w-full bg-black/50 border border-gray-700/60 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 transition-all" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-400 font-mono uppercase tracking-widest block mb-1.5">Registration Deadline</label>
+                    <input type="date" value={eventForm.registration_deadline} onChange={(e)=>setEventForm({...eventForm,registration_deadline:e.target.value})} className="w-full bg-black/50 border border-gray-700/60 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-all" />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="text-xs text-gray-400 font-mono uppercase tracking-widest block mb-1.5">Description</label>
+                    <textarea rows={3} placeholder="Brief description of the event..." value={eventForm.description} onChange={(e)=>setEventForm({...eventForm,description:e.target.value})} className="w-full bg-black/50 border border-gray-700/60 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 transition-all resize-none" />
+                  </div>
+
+                  <div className="md:col-span-2 flex items-center gap-4 bg-blue-900/10 border border-blue-500/20 rounded-lg p-4">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <div className="relative">
+                        <input type="checkbox" checked={eventForm.is_paid} onChange={(e)=>setEventForm({...eventForm,is_paid:e.target.checked})} className="sr-only" />
+                        <div className={`w-10 h-5 rounded-full transition-colors ${eventForm.is_paid ? 'bg-blue-600' : 'bg-gray-700'}`} />
+                        <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${eventForm.is_paid ? 'translate-x-5' : 'translate-x-0'}`} />
+                      </div>
+                      <span className="text-sm text-white font-medium">Paid Event</span>
+                    </label>
+                    {eventForm.is_paid && (
+                      <div className="flex items-center gap-2 flex-1">
+                        <span className="text-gray-400 text-sm">₹</span>
+                        <input type="number" min="0" placeholder="999" value={eventForm.price} onChange={(e)=>setEventForm({...eventForm,price:e.target.value})} className="flex-1 bg-black/50 border border-gray-700/60 rounded-lg px-4 py-2 text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 transition-all" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="text-xs text-gray-400 font-mono uppercase tracking-widest block mb-1.5">Event Poster / Image</label>
+                    <input type="file" accept="image/*" onChange={(e)=>setEventImage(e.target.files[0])} className="w-full bg-black/50 border border-gray-700/60 rounded-lg px-4 py-3 text-gray-400 focus:outline-none focus:border-blue-500 transition-all file:mr-4 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:bg-blue-600 file:text-white file:text-xs file:font-bold file:cursor-pointer" />
+                    {eventImage && <p className="text-xs text-green-400 mt-1 font-mono">✓ {eventImage.name}</p>}
+                  </div>
+                </div>
+
+                <button type="submit" className="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-8 py-3 rounded-xl font-bold hover:from-blue-500 hover:to-blue-400 transition-all shadow-lg shadow-blue-900/30">
+                  + Add Event
+                </button>
+              </form>
+            )}
+
+            {/* ── EVENTS LIST ── */}
+            {eventsSubTab === "list" && (
+              <div className="space-y-4">
+                {events.length === 0 && (
+                  <div className="text-center py-16 text-gray-600 font-mono">No events yet. Click &lsquo;+ Add Event&rsquo; to create one.</div>
+                )}
+                {events.map((ev) => (
+                  <div key={ev.id} className="bg-[#0A1220]/80 border border-white/[0.07] rounded-2xl overflow-hidden hover:border-blue-500/20 transition-all">
+                    {editingEventId === ev.id ? (
+                      /* ── Inline Edit Form ── */
+                      <div className="p-6 space-y-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs text-blue-400 font-mono uppercase tracking-widest">Editing event</span>
+                          <button onClick={() => setEditingEventId(null)} className="text-gray-500 hover:text-white text-sm">✕ Cancel</button>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div className="md:col-span-2">
+                            <label className="text-xs text-gray-500 mb-1 block">Title</label>
+                            <input value={editEventForm.title || ''} onChange={e=>setEditEventForm({...editEventForm,title:e.target.value})} className="w-full bg-black border border-gray-700 rounded-lg px-3 py-2.5 text-white focus:border-blue-500 focus:outline-none" />
+                          </div>
+                          <div>
+                            <label className="text-xs text-gray-500 mb-1 block">Date</label>
+                            <input type="date" value={editEventForm.date || ''} onChange={e=>setEditEventForm({...editEventForm,date:e.target.value})} className="w-full bg-black border border-gray-700 rounded-lg px-3 py-2.5 text-white focus:border-blue-500 focus:outline-none" />
+                          </div>
+                          <div>
+                            <label className="text-xs text-gray-500 mb-1 block">Location</label>
+                            <input value={editEventForm.location || ''} onChange={e=>setEditEventForm({...editEventForm,location:e.target.value})} className="w-full bg-black border border-gray-700 rounded-lg px-3 py-2.5 text-white focus:border-blue-500 focus:outline-none" />
+                          </div>
+                          <div>
+                            <label className="text-xs text-gray-500 mb-1 block">Category</label>
+                            <select value={editEventForm.category || 'Workshop'} onChange={e=>setEditEventForm({...editEventForm,category:e.target.value})} className="w-full bg-black border border-gray-700 rounded-lg px-3 py-2.5 text-white focus:border-blue-500 focus:outline-none">
+                              {["Workshop","Conference","Symposium","Webinar"].map(c => <option key={c} value={c}>{c}</option>)}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-xs text-gray-500 mb-1 block">Price (₹)</label>
+                            <input type="number" min="0" value={editEventForm.price || 0} onChange={e=>setEditEventForm({...editEventForm,price:e.target.value,is_paid: parseFloat(e.target.value) > 0})} className="w-full bg-black border border-gray-700 rounded-lg px-3 py-2.5 text-white focus:border-blue-500 focus:outline-none" />
+                          </div>
+                          <div>
+                            <label className="text-xs text-gray-500 mb-1 block">Capacity</label>
+                            <input type="number" min="1" value={editEventForm.capacity || 100} onChange={e=>setEditEventForm({...editEventForm,capacity:e.target.value})} className="w-full bg-black border border-gray-700 rounded-lg px-3 py-2.5 text-white focus:border-blue-500 focus:outline-none" />
+                          </div>
+                          <div>
+                            <label className="text-xs text-gray-500 mb-1 block">Registration Deadline</label>
+                            <input type="date" value={editEventForm.registration_deadline || ''} onChange={e=>setEditEventForm({...editEventForm,registration_deadline:e.target.value})} className="w-full bg-black border border-gray-700 rounded-lg px-3 py-2.5 text-white focus:border-blue-500 focus:outline-none" />
+                          </div>
+                          <div className="md:col-span-2">
+                            <label className="text-xs text-gray-500 mb-1 block">Description</label>
+                            <textarea rows={2} value={editEventForm.description || ''} onChange={e=>setEditEventForm({...editEventForm,description:e.target.value})} className="w-full bg-black border border-gray-700 rounded-lg px-3 py-2.5 text-white focus:border-blue-500 focus:outline-none resize-none" />
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input type="checkbox" checked={editEventForm.is_paid || false} onChange={e=>setEditEventForm({...editEventForm,is_paid:e.target.checked})} className="w-4 h-4 rounded accent-blue-500" />
+                              <span className="text-sm text-gray-300">Paid Event</span>
+                            </label>
+                          </div>
+                        </div>
+                        <div className="flex gap-3 pt-2">
+                          <button onClick={() => updateEvent(ev.id)} className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-lg font-bold text-sm transition-all">Save Changes</button>
+                          <button onClick={() => setEditingEventId(null)} className="bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white px-6 py-2.5 rounded-lg text-sm transition-all">Cancel</button>
+                        </div>
+                      </div>
+                    ) : (
+                      /* ── Display Row ── */
+                      <div className="flex items-center gap-4 p-5">
+                        {ev.image ? (
+                          <img src={ev.image} alt={ev.title} className="w-20 h-16 rounded-xl object-cover flex-shrink-0" />
+                        ) : (
+                          <div className="w-20 h-16 rounded-xl bg-gray-900 border border-gray-800 flex items-center justify-center text-gray-600 flex-shrink-0">📅</div>
+                        )}
+                        <div className="flex-grow min-w-0">
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <span className="font-bold text-white truncate">{ev.title}</span>
+                            <span className={`text-xs font-mono px-2 py-0.5 rounded-full border flex-shrink-0 ${
+                              ev.category === 'Conference' ? 'bg-purple-500/15 text-purple-400 border-purple-500/30' :
+                              ev.category === 'Symposium' ? 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30' :
+                              ev.category === 'Webinar' ? 'bg-green-500/15 text-green-400 border-green-500/30' :
+                              'bg-blue-500/15 text-blue-400 border-blue-500/30'
+                            }`}>{ev.category || 'Workshop'}</span>
+                            {ev.is_paid ? (
+                              <span className="text-xs font-bold text-amber-400 bg-amber-400/10 border border-amber-400/20 px-2 py-0.5 rounded-full">₹{ev.price}</span>
+                            ) : (
+                              <span className="text-xs font-bold text-green-400 bg-green-400/10 border border-green-400/20 px-2 py-0.5 rounded-full">FREE</span>
+                            )}
+                          </div>
+                          <p className="text-gray-500 text-xs font-mono">{ev.date} • {ev.location} • {ev.capacity} seats</p>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <button
+                            onClick={() => {
+                              setSelectedEventForEnrollments(ev)
+                              setEventsSubTab('enrollments')
+                              fetchEnrollments(ev.id)
+                            }}
+                            className="bg-purple-600/20 text-purple-400 hover:bg-purple-600 hover:text-white px-3 py-1.5 rounded-lg transition-all text-xs font-bold uppercase tracking-widest border border-purple-500/20"
+                          >
+                            Enrollments
+                          </button>
+                          <button
+                            onClick={() => { setEditingEventId(ev.id); setEditEventForm({ ...ev }) }}
+                            className="bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-1.5 rounded-lg transition-all text-xs font-bold uppercase tracking-widest border border-blue-500/20"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => { if(confirm('Delete this event?')) deleteEvent(ev.id) }}
+                            className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded-lg transition-all text-xs font-bold uppercase tracking-widest border border-red-500/20"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* ── ENROLLMENTS SUB-TAB ── */}
+            {eventsSubTab === "enrollments" && (
+              <div className="space-y-6">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-lg font-bold text-white">
+                      {selectedEventForEnrollments ? (
+                        <>Enrollments: <span className="text-blue-400">{selectedEventForEnrollments.title}</span></>
+                      ) : "All Enrollments"}
+                    </h3>
+                    <p className="text-xs text-gray-500 font-mono mt-1">{enrollments.length} registrations found</p>
+                  </div>
+                  <div className="flex gap-3">
+                    <input
+                      type="text"
+                      placeholder="Search name or email..."
+                      value={enrollmentSearch}
+                      onChange={e=>setEnrollmentSearch(e.target.value)}
+                      className="bg-black/50 border border-gray-700 rounded-lg px-4 py-2 text-white text-sm focus:border-blue-500 focus:outline-none transition-all"
+                    />
+                    <button
+                      onClick={() => {
+                        const rows = enrollments.filter(e =>
+                          e.name?.toLowerCase().includes(enrollmentSearch.toLowerCase()) ||
+                          e.email?.toLowerCase().includes(enrollmentSearch.toLowerCase())
+                        )
+                        const csv = [
+                          ['Name','Email','Phone','College','Amount','Payment Status','Payment ID','Enrolled At'],
+                          ...rows.map(r => [r.name,r.email,r.phone,r.college||'',r.amount,r.payment_status,r.payment_id||'free',r.enrolled_at])
+                        ].map(r=>r.join(',')).join('\n')
+                        const blob = new Blob([csv], {type:'text/csv'})
+                        const url = URL.createObjectURL(blob)
+                        const a = document.createElement('a')
+                        a.href=url; a.download=`enrollments-${selectedEventForEnrollments?.title||'all'}.csv`; a.click()
+                      }}
+                      className="bg-white text-black px-4 py-2 rounded-lg font-bold text-xs hover:bg-gray-200 transition-colors whitespace-nowrap"
+                    >
+                      Export CSV
+                    </button>
+                  </div>
+                </div>
+
+                {enrollmentsLoading ? (
+                  <div className="flex justify-center py-12"><div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" /></div>
+                ) : (
+                  <div className="bg-[#0A1220]/80 backdrop-blur-xl border border-white/[0.07] rounded-2xl overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-sm whitespace-nowrap">
+                        <thead className="bg-[#050A10] border-b border-white/[0.07] text-xs uppercase tracking-widest text-gray-400">
+                          <tr>
+                            <th className="p-4">Name</th>
+                            <th className="p-4">Email</th>
+                            <th className="p-4">Phone</th>
+                            <th className="p-4">College</th>
+                            <th className="p-4">Amount</th>
+                            <th className="p-4">Status</th>
+                            <th className="p-4">Payment ID</th>
+                            <th className="p-4">Enrolled</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-800/50">
+                          {enrollments
+                            .filter(e =>
+                              e.name?.toLowerCase().includes(enrollmentSearch.toLowerCase()) ||
+                              e.email?.toLowerCase().includes(enrollmentSearch.toLowerCase())
+                            )
+                            .map((enr) => (
+                              <tr key={enr.id} className="hover:bg-blue-900/10 transition-colors">
+                                <td className="p-4 font-medium text-gray-200">{enr.name}</td>
+                                <td className="p-4 text-gray-400">{enr.email}</td>
+                                <td className="p-4 font-mono text-gray-400">{enr.phone}</td>
+                                <td className="p-4 text-gray-500 truncate max-w-[150px]">{enr.college || '—'}</td>
+                                <td className="p-4 font-bold text-white">{enr.amount > 0 ? `₹${enr.amount}` : 'Free'}</td>
+                                <td className="p-4">
+                                  <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${
+                                    enr.payment_status === 'success' ? 'bg-green-500/15 text-green-400 border-green-500/30' :
+                                    enr.payment_status === 'free' ? 'bg-blue-500/15 text-blue-400 border-blue-500/30' :
+                                    enr.payment_status === 'failed' ? 'bg-red-500/15 text-red-400 border-red-500/30' :
+                                    'bg-yellow-500/15 text-yellow-400 border-yellow-500/30'
+                                  }`}>
+                                    {enr.payment_status === 'free' ? '✓ Free' : enr.payment_status}
+                                  </span>
+                                </td>
+                                <td className="p-4 font-mono text-gray-600 text-xs">{enr.payment_id ? enr.payment_id.substring(0,18)+'...' : '—'}</td>
+                                <td className="p-4 text-gray-500 text-xs">{enr.enrolled_at ? new Date(enr.enrolled_at).toLocaleDateString('en-IN') : '—'}</td>
+                              </tr>
+                            ))
+                          }
+                        </tbody>
+                      </table>
+                      {enrollments.filter(e => e.name?.toLowerCase().includes(enrollmentSearch.toLowerCase()) || e.email?.toLowerCase().includes(enrollmentSearch.toLowerCase())).length === 0 && (
+                        <div className="text-center py-10 text-gray-600 font-mono text-sm">No enrollments found.</div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+          </div>
         )}
 
         {/* COLLABORATORS TAB */}
@@ -1288,6 +1648,92 @@ export default function Admin() {
 
         </div>
       )}
+
+        {/* INBOX / CONTACT MESSAGES TAB */}
+        {tab === "inbox" && (
+          <div className="space-y-6">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-bold text-white">Contact Inbox</h2>
+                <p className="text-xs text-gray-500 font-mono mt-1">
+                  {contactMessages.filter(m => m.status === 'unread').length} unread · {contactMessages.length} total
+                </p>
+              </div>
+              <div className="flex gap-2">
+                {["all", "unread", "read"].map(f => (
+                  <button
+                    key={f}
+                    onClick={() => setContactFilter(f)}
+                    className={`px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${
+                      contactFilter === f ? 'bg-blue-600 text-white' : 'bg-white/5 text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    {f}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {contactLoading ? (
+              <div className="flex justify-center py-12"><div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" /></div>
+            ) : (
+              <div className="space-y-3">
+                {contactMessages
+                  .filter(m => contactFilter === 'all' ? true : m.status === contactFilter)
+                  .map(msg => (
+                    <div
+                      key={msg.id}
+                      className={`bg-[#0A1220]/80 border rounded-2xl p-5 transition-all ${
+                        msg.status === 'unread' ? 'border-blue-500/30 shadow-[0_0_15px_rgba(37,99,235,0.1)]' : 'border-white/[0.07]'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-grow min-w-0">
+                          <div className="flex items-center gap-3 mb-2 flex-wrap">
+                            <span className="font-bold text-white">{msg.name}</span>
+                            <a href={`mailto:${msg.email}`} className="text-blue-400 text-sm hover:text-white transition">{msg.email}</a>
+                            <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border ${
+                              msg.status === 'unread' ? 'bg-blue-500/15 text-blue-400 border-blue-500/30' : 'bg-gray-500/10 text-gray-500 border-gray-500/20'
+                            }`}>{msg.status}</span>
+                            <span className="text-xs text-gray-600 font-mono ml-auto">{new Date(msg.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                          </div>
+                          {msg.subject && <div className="text-sm font-semibold text-gray-300 mb-2">{msg.subject}</div>}
+                          <p className="text-gray-400 text-sm leading-relaxed whitespace-pre-wrap">{msg.message}</p>
+                        </div>
+                        <div className="flex flex-col gap-2 flex-shrink-0">
+                          <a
+                            href={`mailto:${msg.email}?subject=Re: ${encodeURIComponent(msg.subject || 'Your inquiry')}`}
+                            className="px-3 py-1.5 bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white rounded-lg text-xs font-bold uppercase tracking-widest border border-blue-500/20 transition-all text-center"
+                          >
+                            Reply
+                          </a>
+                          {msg.status === 'unread' && (
+                            <button
+                              onClick={() => markMessageRead(msg.id)}
+                              className="px-3 py-1.5 bg-white/5 text-gray-400 hover:text-white rounded-lg text-xs font-bold uppercase tracking-widest border border-white/10 transition-all"
+                            >
+                              Mark Read
+                            </button>
+                          )}
+                          <button
+                            onClick={() => { if(confirm('Delete this message?')) deleteMessage(msg.id) }}
+                            className="px-3 py-1.5 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-lg text-xs font-bold uppercase tracking-widest border border-red-500/20 transition-all"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                }
+                {contactMessages.filter(m => contactFilter === 'all' ? true : m.status === contactFilter).length === 0 && (
+                  <div className="text-center py-16 text-gray-600 font-mono">No messages found.</div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
       </div>
     </main>
   )
