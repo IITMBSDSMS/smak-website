@@ -1,7 +1,6 @@
 import { runEligibilityCheck, runEligibilityForAll } from '@/lib/eligibility-engine';
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req) {
   const { entry_no, run_all } = await req.json();
@@ -24,10 +23,7 @@ export async function POST(req) {
     if (result.success && result.changes?.lor_status === 'eligible') {
       // Fetch member email details
       const { createClient } = await import('@supabase/supabase-js');
-      const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-      );
+      
       const { data: member } = await supabase
         .from('members')
         .select('name, email, course, entry_no')

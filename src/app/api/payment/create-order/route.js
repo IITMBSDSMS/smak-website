@@ -1,14 +1,12 @@
 import { NextResponse } from 'next/server';
 import Razorpay from 'razorpay';
-import { createClient } from "@supabase/supabase-js";
+import { getSupabase } from '@/lib/supabaseServer';
 
 // Initialize Supabase Admin strictly for backend operations
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY // fallback to anon if service missing temporarily
-);
+
 
 export async function POST(req) {
+  const supabase = getSupabase();
   try {
     const { amount, currency = "INR", receipt, entry_no } = await req.json();
 

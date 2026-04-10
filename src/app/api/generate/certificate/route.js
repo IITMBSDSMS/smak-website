@@ -1,13 +1,9 @@
 import { NextResponse } from 'next/server';
-import { createClient } from "@supabase/supabase-js";
+import { getSupabase } from '@/lib/supabaseServer';
 
-// We use service role key if available for backend ops to bypass potential RLS, 
-// otherwise fallback to anon key for standard access.
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function POST(req) {
+  const supabase = getSupabase();
   try {
     const { entry_no } = await req.json();
 

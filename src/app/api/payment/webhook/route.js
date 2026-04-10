@@ -1,15 +1,13 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { getSupabase } from '@/lib/supabaseServer';
 import crypto from 'crypto';
 import { sendInvoiceEmail, sendKitAndSOPEmail } from '@/lib/email-automation';
 
 // Use service role if available for backend webhooks
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+
 
 export async function POST(req) {
+  const supabase = getSupabase();
   try {
     const rawBody = await req.text();
     const signature = req.headers.get('x-razorpay-signature');

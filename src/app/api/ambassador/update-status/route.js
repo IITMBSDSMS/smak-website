@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { getSupabase } from '@/lib/supabaseServer';
 import { Resend } from 'resend';
 import { 
   getShortlistEmail, 
@@ -7,14 +7,11 @@ import {
   getSelectionEmail 
 } from '@/lib/emailTemplates';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY 
-  // Should ideally use service_role to bypass RLS in the backend server, but anon works if RLS allows public update
-);
-const resend = new Resend(process.env.RESEND_API_KEY || "fallback_for_vercel");
+
 
 export async function POST(request) {
+  const supabase = getSupabase();
+  const resend = new Resend(process.env.RESEND_API_KEY);
   try {
     const { id, status, email, name } = await request.json();
 
